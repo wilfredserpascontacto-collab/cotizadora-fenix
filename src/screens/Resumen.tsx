@@ -4,7 +4,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { leerAjustes, leerPerfil, proximoCorrelativo } from '../db/db';
 import { emitirCotizacion, guardarCotizacion } from '../db/repo';
 import { anticipoCents, calcularTotales, formatearNumero } from '../domain/cotizacion';
-import { estimadoMateriales } from '../domain/materiales';
 import { fmtMoney } from '../domain/money';
 import { IVA_BPS } from '../domain/types';
 import { useCotizacion, useAviso } from '../state/useCotizacion';
@@ -34,7 +33,6 @@ export default function Resumen() {
   }
 
   const totales = calcularTotales(cot);
-  const estimado = estimadoMateriales(filas);
   const tipoObra = ajustes.tiposObra.find((t) => t.id === cot.tipoObra);
   const pctObra = tipoObra ? Math.round(tipoObra.multiplicadorBps / 100 - 100) : 0;
 
@@ -57,14 +55,7 @@ export default function Resumen() {
         blob: generarMaterialesPdf(emitida, perfil!, cliente, filasFinales),
       });
     }
-    const texto = textoResumen(
-      emitida,
-      perfil!,
-      cliente,
-      calcularTotales(emitida),
-      estimadoMateriales(filasFinales),
-      incluye.materiales,
-    );
+    const texto = textoResumen(emitida, perfil!, cliente, calcularTotales(emitida), incluye.materiales);
     return { archivos, texto };
   }
 
@@ -173,14 +164,6 @@ export default function Resumen() {
           <p className="mini">
             {filas.length} material{filas.length === 1 ? '' : 'es'}. No entra en el total de arriba.
           </p>
-          <div className="linea-total" style={{ fontSize: 19, fontWeight: 700 }}>
-            <span className="etq">Estimado referencial</span>
-            <span style={{ color: 'var(--material)' }}>~{fmtMoney(estimado)}</span>
-          </div>
-          <p className="mini" style={{ marginTop: 4 }}>
-            Precios de referencia sujetos a la distribuidora.{' '}
-            {cot.mostrarPreciosMateriales ? 'Se muestran en el PDF.' : 'Ocultos en el PDF.'}
-          </p>
           <button
             type="button"
             className="btn chico"
@@ -236,7 +219,7 @@ export default function Resumen() {
             <span className="tenue">
               Total a cobrar
               <span className="mini" style={{ display: 'block' }}>
-                + ~{fmtMoney(estimado)} de material que compra el cliente
+                + material que compra el cliente aparte
               </span>
             </span>
             <span className="cifra">{fmtMoney(totales.totalCents)}</span>

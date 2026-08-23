@@ -44,7 +44,6 @@ const cot: Cotizacion = {
   ajustesMateriales: [],
   materialesExtra: [],
   condiciones: PERFIL_DEFAULT.condicionesPorDefecto,
-  mostrarPreciosMateriales: true,
   estado: 'enviada',
   creadaEn: Date.now(),
   modificadaEn: Date.now(),

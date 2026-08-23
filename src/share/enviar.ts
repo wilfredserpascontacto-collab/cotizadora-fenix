@@ -72,7 +72,6 @@ export function textoResumen(
   perfil: PerfilEmpresa,
   cliente: Cliente | null,
   totales: TotalesCotizacion,
-  estimadoMateriales: number,
   incluyeMateriales: boolean,
 ): string {
   const nombre = (cot.clienteSnapshot ?? cliente)?.nombre ?? 'estimado cliente';
@@ -86,9 +85,7 @@ export function textoResumen(
   ];
   if (incluyeMateriales) {
     lineas.push(
-      `Materiales: van en lista aparte para que usted los compre en la distribuidora${
-        estimadoMateriales > 0 ? `, con un estimado de ${fmtMoney(estimadoMateriales)}` : ''
-      }. Ese monto no me lo paga a mí.`,
+      'Materiales: van en lista aparte para que usted los compre en la distribuidora. Ese monto no me lo paga a mí.',
     );
   }
   lineas.push('', `Válida por ${cot.diasValidez} días. Quedo atento.`);

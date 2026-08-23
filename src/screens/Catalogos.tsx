@@ -235,9 +235,6 @@ function TabMateriales({ materiales }: { materiales: Material[] }) {
               {mat.unidadVenta} · holgura {mat.holguraPct}%
             </span>
           </span>
-          <span className="precio">
-            {mat.precioRefCents !== undefined ? fmtMoney(mat.precioRefCents) : '—'}
-          </span>
         </button>
       ))}
 
@@ -248,9 +245,6 @@ function TabMateriales({ materiales }: { materiales: Material[] }) {
 
 function EditorMaterial({ material, onCerrar }: { material: Material; onCerrar: () => void }) {
   const [borrador, setBorrador] = useState<Material>(material);
-  const [precio, setPrecio] = useState(
-    material.precioRefCents !== undefined ? centsToInput(material.precioRefCents) : '',
-  );
   const [contenido, setContenido] = useState(fmtMilli(material.contenidoPorUnidadVentaMilli));
 
   return (
@@ -300,10 +294,6 @@ function EditorMaterial({ material, onCerrar }: { material: Material; onCerrar: 
         <input value={contenido} onChange={(e) => setContenido(e.target.value)} inputMode="decimal" />
       </Campo>
 
-      <Campo etiqueta="Precio de referencia por presentación" ayuda="Opcional. Nunca suma al total de Grupo Fénix.">
-        <input value={precio} onChange={(e) => setPrecio(e.target.value)} inputMode="decimal" placeholder="0.00" />
-      </Campo>
-
       <button
         type="button"
         className="btn primario"
@@ -312,7 +302,6 @@ function EditorMaterial({ material, onCerrar }: { material: Material; onCerrar: 
           await guardarMaterial({
             ...borrador,
             contenidoPorUnidadVentaMilli: Math.max(1, parseMilli(contenido)),
-            precioRefCents: precio.trim() ? parseCents(precio) : undefined,
           });
           onCerrar();
         }}

@@ -6,8 +6,7 @@ import {
   quitarMaterialExtra,
   guardarCotizacion,
 } from '../db/repo';
-import { estimadoIncompleto, estimadoMateriales } from '../domain/materiales';
-import { centsToInput, fmtMilli, fmtMoney, parseCents } from '../domain/money';
+import { fmtMilli } from '../domain/money';
 import { useCotizacion } from '../state/useCotizacion';
 import { useMateriales } from '../state/useMateriales';
 import { Barra, Campo, Cargando, Contador, Hoja, Vacio } from '../components/ui';
@@ -22,8 +21,6 @@ export default function ListaMateriales() {
 
   if (cargando || !cot || !filas || !catalogo) return cargando ? <Cargando /> : <Vacio titulo="Cotización no encontrada" />;
 
-  const estimado = estimadoMateriales(filas);
-  const incompleto = estimadoIncompleto(filas);
   const extras = new Map(cot.materialesExtra.map((e) => [e.materialId ?? e.id, e]));
 
   return (
@@ -81,11 +78,6 @@ export default function ListaMateriales() {
                     {f.fuente === 'manual' && <span className="etiqueta material">Agregado a mano</span>}
                   </div>
                 </div>
-                {f.precioRefCents !== undefined && (
-                  <span className="mini" style={{ whiteSpace: 'nowrap' }}>
-                    ~{fmtMoney(f.estimadoCents)}
-                  </span>
-                )}
               </div>
 
               {detalle === f.materialId && (
@@ -171,32 +163,6 @@ export default function ListaMateriales() {
         >
           + Agregar un material suelto
         </button>
-
-        <div className="tarjeta bloque-material" style={{ marginTop: 16 }}>
-          <div className="fila entre">
-            <div>
-              <strong>Estimado en la distribuidora</strong>
-              <div className="mini">Precios de referencia. No es un cobro de Grupo Fénix.</div>
-            </div>
-            <strong style={{ fontSize: 20 }}>{fmtMoney(estimado)}</strong>
-          </div>
-          {incompleto && (
-            <p className="mini" style={{ marginTop: 8, marginBottom: 0 }}>
-              Algún material no tiene precio de referencia, así que el estimado se queda corto.
-            </p>
-          )}
-          <label className="fila" style={{ marginTop: 12, gap: 10 }}>
-            <input
-              type="checkbox"
-              style={{ width: 22, height: 22, minHeight: 22, flex: '0 0 auto' }}
-              checked={cot.mostrarPreciosMateriales}
-              onChange={(e) =>
-                void guardarCotizacion({ ...cot, mostrarPreciosMateriales: e.target.checked })
-              }
-            />
-            <span className="tenue">Mostrar la columna de precios en el PDF del cliente</span>
-          </label>
-        </div>
       </main>
 
       <div className="pie">
@@ -207,9 +173,6 @@ export default function ListaMateriales() {
               <span className="mini" style={{ display: 'block' }}>
                 no suma al total de Grupo Fénix
               </span>
-            </span>
-            <span className="cifra" style={{ color: 'var(--material)' }}>
-              ~{fmtMoney(estimado)}
             </span>
           </div>
           <button type="button" className="btn primario" onClick={() => navigate(`/cot/${cot.id}/resumen`)}>
@@ -237,20 +200,18 @@ function FormularioExtra({
   catalogo,
   onGuardar,
 }: {
-  catalogo: { id: string; nombre: string; unidadVenta: string; precioRefCents?: number }[];
+  catalogo: { id: string; nombre: string; unidadVenta: string }[];
   onGuardar: (datos: {
     materialId?: string;
     nombre: string;
     unidadVenta: string;
     unidadesVenta: number;
-    precioRefCents?: number;
   }) => void;
 }) {
   const [materialId, setMaterialId] = useState('');
   const [nombre, setNombre] = useState('');
   const [unidadVenta, setUnidadVenta] = useState('unidad');
   const [cantidad, setCantidad] = useState(1);
-  const [precio, setPrecio] = useState('');
 
   const delCatalogo = catalogo.find((m) => m.id === materialId);
   const nombreFinal = delCatalogo?.nombre ?? nombre.trim();
@@ -266,7 +227,6 @@ function FormularioExtra({
             const m = catalogo.find((x) => x.id === e.target.value);
             if (m) {
               setUnidadVenta(m.unidadVenta);
-              setPrecio(m.precioRefCents !== undefined ? centsToInput(m.precioRefCents) : '');
             }
           }}
         >
@@ -294,10 +254,6 @@ function FormularioExtra({
         <Contador valor={cantidad} min={1} onCambio={(d) => setCantidad((c) => Math.max(1, c + d))} />
       </Campo>
 
-      <Campo etiqueta="Precio de referencia" ayuda="Opcional. Nunca suma al total de Grupo Fénix.">
-        <input value={precio} onChange={(e) => setPrecio(e.target.value)} inputMode="decimal" placeholder="0.00" />
-      </Campo>
-
       <button
         type="button"
         className="btn primario"
@@ -308,7 +264,6 @@ function FormularioExtra({
             nombre: nombreFinal,
             unidadVenta: delCatalogo?.unidadVenta ?? unidadVenta,
             unidadesVenta: cantidad,
-            precioRefCents: precio.trim() ? parseCents(precio) : undefined,
           })
         }
       >

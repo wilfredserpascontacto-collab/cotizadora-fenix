@@ -50,7 +50,6 @@ export async function crearCotizacion(datos: {
     ajustesMateriales: [],
     materialesExtra: [],
     condiciones: perfil.condicionesPorDefecto,
-    mostrarPreciosMateriales: true,
     estado: 'borrador',
     creadaEn: ahora,
     modificadaEn: ahora,

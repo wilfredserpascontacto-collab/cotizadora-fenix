@@ -79,8 +79,6 @@ export interface Material {
   contenidoPorUnidadVentaMilli: Milli;
   /** Desperdicio, en porcentaje entero. */
   holguraPct: number;
-  /** Precio de REFERENCIA por unidad de venta. Nunca suma al total de Fenix. */
-  precioRefCents?: Cents;
   categoria: CategoriaMaterial;
 }
 
@@ -137,7 +135,6 @@ export interface MaterialExtra {
   nombre: string;
   unidadVenta: string;
   unidadesVenta: number;
-  precioRefCents?: Cents;
 }
 
 export type EstadoCotizacion = 'borrador' | 'enviada' | 'aceptada' | 'rechazada' | 'vencida';
@@ -162,7 +159,6 @@ export interface Cotizacion {
   materialesCongelados?: Material[];
   notas?: string;
   condiciones: string;
-  mostrarPreciosMateriales: boolean;
   estado: EstadoCotizacion;
   creadaEn: number;
   modificadaEn: number;

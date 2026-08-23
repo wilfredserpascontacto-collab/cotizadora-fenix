@@ -1,16 +1,15 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatearNumero } from '../domain/cotizacion';
-import { estimadoMateriales, type RenglonMaterialCalculado } from '../domain/materiales';
-import { fmtMoney } from '../domain/money';
+import type { RenglonMaterialCalculado } from '../domain/materiales';
 import type { Cliente, Cotizacion, PerfilEmpresa } from '../domain/types';
 import { ANCHO, GRIS, LINEA, MARGEN, TINTA, bloqueCliente, caja, encabezado, pies } from './comun';
 
 /**
  * Lista de materiales para compra.
  * No es un cobro: es la instrucción de compra que el cliente lleva a la
- * distribuidora. Por eso no lleva IVA, no lleva total a pagar y todo precio
- * va marcado como referencia.
+ * distribuidora. Por eso no lleva IVA, no lleva total a pagar y nunca precios:
+ * Grupo Fénix no maneja precios de materiales, ni siquiera de referencia.
  */
 export function generarMaterialesPdf(
   cot: Cotizacion,
@@ -20,7 +19,6 @@ export function generarMaterialesPdf(
 ): Blob {
   const doc = new jsPDF({ unit: 'pt', format: 'letter', compress: true });
   const c = cot.clienteSnapshot ?? cliente;
-  const conPrecios = cot.mostrarPreciosMateriales;
   const visibles = filas.filter((f) => f.unidadesVenta > 0);
 
   let y = encabezado(
@@ -43,39 +41,19 @@ export function generarMaterialesPdf(
     [237, 233, 254],
   );
 
-  const cabecera = conPrecios
-    ? ['Material', 'Cant.', 'Presentación', 'P. ref.', 'Subtotal ref.']
-    : ['Material', 'Cant.', 'Presentación'];
-
   autoTable(doc, {
     startY: y,
-    head: [cabecera],
-    body: visibles.map((f) => {
-      const base = [f.nombre, String(f.unidadesVenta), f.unidadVenta];
-      if (!conPrecios) return base;
-      return [
-        ...base,
-        f.precioRefCents !== undefined ? fmtMoney(f.precioRefCents) : '—',
-        f.precioRefCents !== undefined ? fmtMoney(f.estimadoCents) : '—',
-      ];
-    }),
+    head: [['Material', 'Cant.', 'Presentación']],
+    body: visibles.map((f) => [f.nombre, String(f.unidadesVenta), f.unidadVenta]),
     margin: { left: MARGEN, right: MARGEN, bottom: 60 },
     styles: { font: 'helvetica', fontSize: 9.5, cellPadding: 6, textColor: TINTA, lineColor: LINEA, lineWidth: 0.5 },
     headStyles: { fillColor: [91, 33, 182], textColor: [255, 255, 255], fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [250, 250, 255] },
-    columnStyles: conPrecios
-      ? {
-          0: { cellWidth: 'auto' },
-          1: { cellWidth: 42, halign: 'right' },
-          2: { cellWidth: 108 },
-          3: { cellWidth: 62, halign: 'right' },
-          4: { cellWidth: 78, halign: 'right' },
-        }
-      : {
-          0: { cellWidth: 'auto' },
-          1: { cellWidth: 52, halign: 'right' },
-          2: { cellWidth: 150 },
-        },
+    columnStyles: {
+      0: { cellWidth: 'auto' },
+      1: { cellWidth: 52, halign: 'right' },
+      2: { cellWidth: 150 },
+    },
     showHead: 'everyPage',
     rowPageBreak: 'avoid',
   });
@@ -87,28 +65,10 @@ export function generarMaterialesPdf(
     y = encabezado(doc, perfil, cot, 'Lista de materiales', 'continuación', false);
   }
 
-  if (conPrecios) {
-    const estimado = estimadoMateriales(visibles);
-    const xEtq = ANCHO - MARGEN - 240;
-    const xVal = ANCHO - MARGEN;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(...GRIS);
-    doc.text('Estimado de compra (referencial)', xEtq, y);
-    doc.setTextColor(...TINTA);
-    doc.text(fmtMoney(estimado), xVal, y, { align: 'right' });
-    y += 22;
-  }
-
   y = caja(
     doc,
     y,
-    'Las cantidades ya incluyen el desperdicio propio del trabajo y están redondeadas a la presentación comercial en que se vende cada material (rollos, tubos, bolsas), por eso pueden verse mayores al consumo exacto.' +
-      (conPrecios
-        ? ' Los precios son de REFERENCIA y están sujetos a lo que cobre la distribuidora el día de la compra; no constituyen una oferta de ' +
-          (perfil.nombre || 'Grupo Fénix') +
-          '.'
-        : ''),
+    'Las cantidades ya incluyen el desperdicio propio del trabajo y están redondeadas a la presentación comercial en que se vende cada material (rollos, tubos, bolsas), por eso pueden verse mayores al consumo exacto.',
     [100, 116, 139],
     [248, 250, 252],
   );

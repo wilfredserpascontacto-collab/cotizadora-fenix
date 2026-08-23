@@ -2,7 +2,7 @@
  * Verificacion rapida de las reglas de calculo, sin runner de pruebas.
  *   npm run verificar
  */
-import { calcularMateriales, estimadoMateriales } from '../src/domain/materiales';
+import { calcularMateriales } from '../src/domain/materiales';
 import { calcularTotales, renglonDesdePartida } from '../src/domain/cotizacion';
 import { MATERIALES_SEED, PARTIDAS_SEED } from '../src/db/seed';
 import { fmtMoney } from '../src/domain/money';
@@ -28,7 +28,6 @@ console.log('tuberia bruto(m)=', tubo.brutoMilli / 1000, '->', tubo.unidadesVent
 
 console.log('materiales distintos =', filas.length);
 console.log('cable aparece', filas.filter((f) => f.materialId === 'cable-thhn-12').length, 'vez');
-console.log('estimado materiales =', fmtMoney(estimadoMateriales(filas)));
 
 // Redondeo: 37 m de cable deben dar 1 rollo de 100 m.
 const soloUno = calcularMateriales(

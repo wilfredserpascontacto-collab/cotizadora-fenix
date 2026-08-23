@@ -1,6 +1,5 @@
 import type {
   AjusteMaterial,
-  Cents,
   Material,
   MaterialExtra,
   Milli,
@@ -23,8 +22,6 @@ export interface RenglonMaterialCalculado {
   unidadesVenta: number;
   /** Unidades que salieron del calculo, antes de que Francisco las tocara. */
   unidadesCalculadas: number;
-  precioRefCents?: Cents;
-  estimadoCents: Cents;
   fuente: FuenteRenglon;
   /** Que partidas lo consumen. Sirve para explicar de donde sale la cantidad. */
   origenes: string[];
@@ -38,7 +35,7 @@ export interface RenglonMaterialCalculado {
  * Reglas obligatorias, en este orden:
  *  1. holgura por desperdicio
  *  2. redondeo HACIA ARRIBA a la unidad de venta de la distribuidora
- *  3. el precio de referencia es informativo y jamas suma al total de Fenix
+ *  3. nunca lleva precio: Francisco no maneja precios de materiales
  *
  * El tipo de obra NO entra aqui: su multiplicador toca la mano de obra,
  * nunca las cantidades de material.
@@ -87,8 +84,6 @@ export function calcularMateriales(
       holguraPct: material.holguraPct,
       unidadesVenta,
       unidadesCalculadas,
-      precioRefCents: material.precioRefCents,
-      estimadoCents: (material.precioRefCents ?? 0) * unidadesVenta,
       fuente: ajuste?.unidadesVenta !== undefined ? 'ajustado' : 'calculado',
       origenes: [...origenes],
     });
@@ -107,25 +102,10 @@ export function calcularMateriales(
       holguraPct: 0,
       unidadesVenta: extra.unidadesVenta,
       unidadesCalculadas: extra.unidadesVenta,
-      precioRefCents: extra.precioRefCents,
-      estimadoCents: (extra.precioRefCents ?? 0) * extra.unidadesVenta,
       fuente: 'manual',
       origenes: [],
     });
   }
 
   return filas;
-}
-
-/**
- * Estimado de lo que el cliente gastara en la distribuidora.
- * Es un dato de referencia para el cliente y NUNCA entra en el total de Fenix.
- */
-export function estimadoMateriales(filas: RenglonMaterialCalculado[]): Cents {
-  return filas.reduce((suma, fila) => suma + fila.estimadoCents, 0);
-}
-
-/** true si algun material carece de precio de referencia (el estimado queda incompleto). */
-export function estimadoIncompleto(filas: RenglonMaterialCalculado[]): boolean {
-  return filas.some((f) => f.precioRefCents === undefined && f.unidadesVenta > 0);
 }

@@ -10,65 +10,65 @@ const d = (n: number) => Math.round(n * 100);
 /**
  * Catalogo de materiales.
  * La unidad de venta es lo que hace util la lista: el cliente compra rollos y
- * tubos, no metros sueltos. Los precios son de referencia y Francisco los ajusta.
+ * tubos, no metros sueltos. Sin precios: Francisco no los maneja.
  */
 export const MATERIALES_SEED: Material[] = [
   // Conductores — se venden en rollo, holgura 10% porque el cable se corta.
-  { id: 'cable-thhn-10', nombre: 'Cable THHN #10', unidadMedida: 'm', unidadVenta: 'rollo de 100 m', contenidoPorUnidadVentaMilli: m(100), holguraPct: 10, precioRefCents: d(65), categoria: 'conductores' },
-  { id: 'cable-thhn-12', nombre: 'Cable THHN #12', unidadMedida: 'm', unidadVenta: 'rollo de 100 m', contenidoPorUnidadVentaMilli: m(100), holguraPct: 10, precioRefCents: d(45), categoria: 'conductores' },
-  { id: 'cable-thhn-14', nombre: 'Cable THHN #14', unidadMedida: 'm', unidadVenta: 'rollo de 100 m', contenidoPorUnidadVentaMilli: m(100), holguraPct: 10, precioRefCents: d(32), categoria: 'conductores' },
-  { id: 'cable-desnudo-6', nombre: 'Cable desnudo de cobre #6', unidadMedida: 'm', unidadVenta: 'metro', contenidoPorUnidadVentaMilli: m(1), holguraPct: 10, precioRefCents: d(2.1), categoria: 'tierra' },
+  { id: 'cable-thhn-10', nombre: 'Cable THHN #10', unidadMedida: 'm', unidadVenta: 'rollo de 100 m', contenidoPorUnidadVentaMilli: m(100), holguraPct: 10, categoria: 'conductores' },
+  { id: 'cable-thhn-12', nombre: 'Cable THHN #12', unidadMedida: 'm', unidadVenta: 'rollo de 100 m', contenidoPorUnidadVentaMilli: m(100), holguraPct: 10, categoria: 'conductores' },
+  { id: 'cable-thhn-14', nombre: 'Cable THHN #14', unidadMedida: 'm', unidadVenta: 'rollo de 100 m', contenidoPorUnidadVentaMilli: m(100), holguraPct: 10, categoria: 'conductores' },
+  { id: 'cable-desnudo-6', nombre: 'Cable desnudo de cobre #6', unidadMedida: 'm', unidadVenta: 'metro', contenidoPorUnidadVentaMilli: m(1), holguraPct: 10, categoria: 'tierra' },
 
   // Canalizacion — el tubo viene de 3 m, holgura 10%.
-  { id: 'tuberia-pvc-12', nombre: 'Tubería PVC eléctrica 1/2"', unidadMedida: 'm', unidadVenta: 'tubo de 3 m', contenidoPorUnidadVentaMilli: m(3), holguraPct: 10, precioRefCents: d(1.75), categoria: 'canalizacion' },
-  { id: 'tuberia-pvc-34', nombre: 'Tubería PVC eléctrica 3/4"', unidadMedida: 'm', unidadVenta: 'tubo de 3 m', contenidoPorUnidadVentaMilli: m(3), holguraPct: 10, precioRefCents: d(2.6), categoria: 'canalizacion' },
-  { id: 'canaleta', nombre: 'Canaleta plástica 20x12 mm', unidadMedida: 'm', unidadVenta: 'tramo de 2 m', contenidoPorUnidadVentaMilli: m(2), holguraPct: 10, precioRefCents: d(2.2), categoria: 'canalizacion' },
-  { id: 'curva-pvc-12', nombre: 'Curva PVC 1/2"', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, precioRefCents: d(0.35), categoria: 'canalizacion' },
-  { id: 'curva-pvc-34', nombre: 'Curva PVC 3/4"', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, precioRefCents: d(0.5), categoria: 'canalizacion' },
-  { id: 'conector-pvc-12', nombre: 'Conector PVC 1/2"', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, precioRefCents: d(0.25), categoria: 'canalizacion' },
-  { id: 'conector-pvc-34', nombre: 'Conector PVC 3/4"', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, precioRefCents: d(0.4), categoria: 'canalizacion' },
+  { id: 'tuberia-pvc-12', nombre: 'Tubería PVC eléctrica 1/2"', unidadMedida: 'm', unidadVenta: 'tubo de 3 m', contenidoPorUnidadVentaMilli: m(3), holguraPct: 10, categoria: 'canalizacion' },
+  { id: 'tuberia-pvc-34', nombre: 'Tubería PVC eléctrica 3/4"', unidadMedida: 'm', unidadVenta: 'tubo de 3 m', contenidoPorUnidadVentaMilli: m(3), holguraPct: 10, categoria: 'canalizacion' },
+  { id: 'canaleta', nombre: 'Canaleta plástica 20x12 mm', unidadMedida: 'm', unidadVenta: 'tramo de 2 m', contenidoPorUnidadVentaMilli: m(2), holguraPct: 10, categoria: 'canalizacion' },
+  { id: 'curva-pvc-12', nombre: 'Curva PVC 1/2"', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, categoria: 'canalizacion' },
+  { id: 'curva-pvc-34', nombre: 'Curva PVC 3/4"', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, categoria: 'canalizacion' },
+  { id: 'conector-pvc-12', nombre: 'Conector PVC 1/2"', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, categoria: 'canalizacion' },
+  { id: 'conector-pvc-34', nombre: 'Conector PVC 3/4"', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, categoria: 'canalizacion' },
 
   // Cajas
-  { id: 'caja-rect', nombre: 'Caja rectangular PVC', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, precioRefCents: d(0.6), categoria: 'cajas' },
-  { id: 'caja-octagonal', nombre: 'Caja octagonal PVC', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, precioRefCents: d(0.7), categoria: 'cajas' },
+  { id: 'caja-rect', nombre: 'Caja rectangular PVC', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, categoria: 'cajas' },
+  { id: 'caja-octagonal', nombre: 'Caja octagonal PVC', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, categoria: 'cajas' },
 
   // Dispositivos
-  { id: 'toma-doble-pol', nombre: 'Tomacorriente doble polarizado 110V', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, precioRefCents: d(2.75), categoria: 'dispositivos' },
-  { id: 'toma-220', nombre: 'Tomacorriente 220V', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(6.5), categoria: 'dispositivos' },
-  { id: 'interruptor-sencillo', nombre: 'Interruptor sencillo', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, precioRefCents: d(2.25), categoria: 'dispositivos' },
-  { id: 'interruptor-doble', nombre: 'Interruptor doble', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, precioRefCents: d(3.5), categoria: 'dispositivos' },
-  { id: 'interruptor-3vias', nombre: 'Interruptor de tres vías', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(4.75), categoria: 'dispositivos' },
-  { id: 'placa-1', nombre: 'Placa de 1 posición', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, precioRefCents: d(0.75), categoria: 'dispositivos' },
-  { id: 'placa-2', nombre: 'Placa de 2 posiciones', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, precioRefCents: d(0.95), categoria: 'dispositivos' },
+  { id: 'toma-doble-pol', nombre: 'Tomacorriente doble polarizado 110V', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, categoria: 'dispositivos' },
+  { id: 'toma-220', nombre: 'Tomacorriente 220V', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'dispositivos' },
+  { id: 'interruptor-sencillo', nombre: 'Interruptor sencillo', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, categoria: 'dispositivos' },
+  { id: 'interruptor-doble', nombre: 'Interruptor doble', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, categoria: 'dispositivos' },
+  { id: 'interruptor-3vias', nombre: 'Interruptor de tres vías', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'dispositivos' },
+  { id: 'placa-1', nombre: 'Placa de 1 posición', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, categoria: 'dispositivos' },
+  { id: 'placa-2', nombre: 'Placa de 2 posiciones', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, categoria: 'dispositivos' },
 
   // Protecciones — holgura 0: una pieza cara y discreta no se "desperdicia",
   // y un 5% sobre una unidad obligaria a comprar dos tableros.
-  { id: 'breaker-1x15', nombre: 'Breaker 1x15A', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(6), categoria: 'protecciones' },
-  { id: 'breaker-1x20', nombre: 'Breaker 1x20A', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(6.5), categoria: 'protecciones' },
-  { id: 'breaker-1x30', nombre: 'Breaker 1x30A', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(8), categoria: 'protecciones' },
-  { id: 'breaker-2x30', nombre: 'Breaker 2x30A', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(18), categoria: 'protecciones' },
-  { id: 'breaker-2x50', nombre: 'Breaker 2x50A', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(24), categoria: 'protecciones' },
-  { id: 'caja-termica-4', nombre: 'Caja térmica de 4 espacios', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(22), categoria: 'protecciones' },
-  { id: 'caja-termica-8', nombre: 'Caja térmica de 8 espacios', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(38), categoria: 'protecciones' },
-  { id: 'caja-termica-12', nombre: 'Caja térmica de 12 espacios', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(55), categoria: 'protecciones' },
-  { id: 'caja-termica-20', nombre: 'Caja térmica de 20 espacios', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(85), categoria: 'protecciones' },
+  { id: 'breaker-1x15', nombre: 'Breaker 1x15A', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'protecciones' },
+  { id: 'breaker-1x20', nombre: 'Breaker 1x20A', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'protecciones' },
+  { id: 'breaker-1x30', nombre: 'Breaker 1x30A', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'protecciones' },
+  { id: 'breaker-2x30', nombre: 'Breaker 2x30A', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'protecciones' },
+  { id: 'breaker-2x50', nombre: 'Breaker 2x50A', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'protecciones' },
+  { id: 'caja-termica-4', nombre: 'Caja térmica de 4 espacios', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'protecciones' },
+  { id: 'caja-termica-8', nombre: 'Caja térmica de 8 espacios', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'protecciones' },
+  { id: 'caja-termica-12', nombre: 'Caja térmica de 12 espacios', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'protecciones' },
+  { id: 'caja-termica-20', nombre: 'Caja térmica de 20 espacios', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'protecciones' },
 
   // Tierra — la varilla y la barra tampoco llevan holgura.
-  { id: 'barra-tierra', nombre: 'Barra de tierra para tablero', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(6.5), categoria: 'tierra' },
-  { id: 'varilla-tierra', nombre: 'Varilla de polo a tierra 5/8" x 6 pies', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(12), categoria: 'tierra' },
+  { id: 'barra-tierra', nombre: 'Barra de tierra para tablero', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'tierra' },
+  { id: 'varilla-tierra', nombre: 'Varilla de polo a tierra 5/8" x 6 pies', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'tierra' },
 
   // Accesorios
-  { id: 'cinta-aislante', nombre: 'Cinta aislante', unidadMedida: 'u', unidadVenta: 'rollo', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, precioRefCents: d(1.25), categoria: 'accesorios' },
-  { id: 'amarras', nombre: 'Amarras plásticas', unidadMedida: 'u', unidadVenta: 'bolsa de 100', contenidoPorUnidadVentaMilli: m(100), holguraPct: 5, precioRefCents: d(2.5), categoria: 'accesorios' },
-  { id: 'tornillos-chazos', nombre: 'Tornillos y chazos', unidadMedida: 'u', unidadVenta: 'bolsa de 50 juegos', contenidoPorUnidadVentaMilli: m(50), holguraPct: 5, precioRefCents: d(3.5), categoria: 'accesorios' },
+  { id: 'cinta-aislante', nombre: 'Cinta aislante', unidadMedida: 'u', unidadVenta: 'rollo', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, categoria: 'accesorios' },
+  { id: 'amarras', nombre: 'Amarras plásticas', unidadMedida: 'u', unidadVenta: 'bolsa de 100', contenidoPorUnidadVentaMilli: m(100), holguraPct: 5, categoria: 'accesorios' },
+  { id: 'tornillos-chazos', nombre: 'Tornillos y chazos', unidadMedida: 'u', unidadVenta: 'bolsa de 50 juegos', contenidoPorUnidadVentaMilli: m(50), holguraPct: 5, categoria: 'accesorios' },
 
   // Datos
-  { id: 'cable-utp-cat6', nombre: 'Cable UTP categoría 6', unidadMedida: 'm', unidadVenta: 'rollo de 305 m', contenidoPorUnidadVentaMilli: m(305), holguraPct: 10, precioRefCents: d(85), categoria: 'datos' },
-  { id: 'conector-rj45', nombre: 'Conector RJ45 categoría 6', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, precioRefCents: d(0.35), categoria: 'datos' },
+  { id: 'cable-utp-cat6', nombre: 'Cable UTP categoría 6', unidadMedida: 'm', unidadVenta: 'rollo de 305 m', contenidoPorUnidadVentaMilli: m(305), holguraPct: 10, categoria: 'datos' },
+  { id: 'conector-rj45', nombre: 'Conector RJ45 categoría 6', unidadMedida: 'u', unidadVenta: 'unidad', contenidoPorUnidadVentaMilli: m(1), holguraPct: 5, categoria: 'datos' },
 
   // Climatizacion
-  { id: 'set-tuberia-cobre', nombre: 'Set tubería de cobre 1/4" y 3/8"', unidadMedida: 'u', unidadVenta: 'juego de 3 m', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(38), categoria: 'climatizacion' },
-  { id: 'soporte-minisplit', nombre: 'Soporte de pared para mini split', unidadMedida: 'u', unidadVenta: 'juego', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, precioRefCents: d(18), categoria: 'climatizacion' },
+  { id: 'set-tuberia-cobre', nombre: 'Set tubería de cobre 1/4" y 3/8"', unidadMedida: 'u', unidadVenta: 'juego de 3 m', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'climatizacion' },
+  { id: 'soporte-minisplit', nombre: 'Soporte de pared para mini split', unidadMedida: 'u', unidadVenta: 'juego', contenidoPorUnidadVentaMilli: m(1), holguraPct: 0, categoria: 'climatizacion' },
 ];
 
 /**
