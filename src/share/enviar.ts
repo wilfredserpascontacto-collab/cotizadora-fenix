@@ -8,7 +8,11 @@ export interface ArchivoPdf {
   blob: Blob;
 }
 
-export type ResultadoEnvio = 'compartido' | 'descargado' | 'cancelado';
+export type ResultadoEnvio =
+  | { estado: 'compartido' }
+  | { estado: 'cancelado' }
+  /** No se pudo compartir: los PDF quedaron descargados y hay que adjuntarlos. */
+  | { estado: 'descargado'; motivo: string; urlWhatsApp: string };
 
 /**
  * Manda los PDF por WhatsApp con Web Share nivel 2.
@@ -25,22 +29,27 @@ export async function enviarPdfs(
     (a) => new File([a.blob], a.nombre, { type: 'application/pdf' }),
   );
 
+  let motivo = 'Este dispositivo no deja compartir archivos.';
+
   if (typeof navigator !== 'undefined' && navigator.canShare?.({ files })) {
     try {
       await navigator.share({ files, text: texto, title: archivos[0]?.nombre });
-      return 'compartido';
+      return { estado: 'compartido' };
     } catch (e) {
       // El usuario cerró la hoja de compartir: no es un error que reportar.
-      if ((e as DOMException)?.name === 'AbortError') return 'cancelado';
-      // Cualquier otra falla cae al plan B, pero dejando rastro: el caso
-      // tipico es NotAllowedError por gesto vencido, y sin esto no se ve.
-      console.warn('No se pudo compartir, se descargan los PDF:', (e as Error)?.name, e);
+      if ((e as DOMException)?.name === 'AbortError') return { estado: 'cancelado' };
+      const nombre = (e as DOMException)?.name ?? 'error';
+      motivo = `El teléfono rechazó compartir (${nombre}).`;
+      console.warn('No se pudo compartir, se descargan los PDF:', nombre, e);
     }
   }
 
   for (const a of archivos) descargar(a);
-  abrirWhatsApp(texto, telefono);
-  return 'descargado';
+  // Ojo: aca NO se navega a WhatsApp. Hacerlo en el mismo tick cancelaba las
+  // descargas que acababan de empezar, y el usuario terminaba sin PDF y sin
+  // saber por que. La URL se devuelve para que la pantalla la ofrezca como
+  // boton: al tocarlo hay gesto propio y las descargas ya terminaron.
+  return { estado: 'descargado', motivo, urlWhatsApp: urlWhatsApp(texto, telefono) };
 }
 
 export function descargar({ nombre, blob }: ArchivoPdf) {
@@ -70,12 +79,12 @@ function abrirEnlace(url: string) {
   if (!ventana) window.location.href = url;
 }
 
-function abrirWhatsApp(texto: string, telefono?: string) {
+export function urlWhatsApp(texto: string, telefono?: string) {
   // wa.me quiere el número sin signos. El 503 es El Salvador.
   const limpio = (telefono ?? '').replace(/\D/g, '');
   const numero = limpio.length === 8 ? `503${limpio}` : limpio;
   const base = numero ? `https://wa.me/${numero}` : 'https://wa.me/';
-  abrirEnlace(`${base}?text=${encodeURIComponent(texto)}`);
+  return `${base}?text=${encodeURIComponent(texto)}`;
 }
 
 /** Texto que acompaña los PDF en el chat. */
