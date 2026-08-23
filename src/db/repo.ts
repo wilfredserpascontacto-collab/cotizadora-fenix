@@ -47,9 +47,12 @@ export async function crearCotizacion(datos: {
     renglones: [],
     tipoObra: tipo.id,
     multiplicadorBps: tipo.multiplicadorBps,
+    aplicaIva: true,
     ajustesMateriales: [],
     materialesExtra: [],
     condiciones: perfil.condicionesPorDefecto,
+    formaPagoId: perfil.formaPagoPorDefectoId,
+    clausulasSeleccionadas: ajustes.clausulas.filter((c) => c.porDefecto).map((c) => c.id),
     estado: 'borrador',
     creadaEn: ahora,
     modificadaEn: ahora,
@@ -149,9 +152,10 @@ export async function quitarMaterialExtra(cot: Cotizacion, extraId: string): Pro
 export async function emitirCotizacion(cot: Cotizacion): Promise<Cotizacion> {
   if (cot.numero !== null) return cot;
 
-  const [cliente, materiales] = await Promise.all([
+  const [cliente, materiales, ajustes] = await Promise.all([
     db.clientes.get(cot.clienteId),
     db.materiales.toArray(),
+    leerAjustes(),
   ]);
   const usados = new Set<string>();
   for (const r of cot.renglones) for (const l of r.recetaCongelada) usados.add(l.materialId);
@@ -164,6 +168,9 @@ export async function emitirCotizacion(cot: Cotizacion): Promise<Cotizacion> {
     estado: 'enviada',
     clienteSnapshot: cliente,
     materialesCongelados: materiales.filter((m) => usados.has(m.id)),
+    clausulasCongeladas: ajustes.clausulas
+      .filter((c) => cot.clausulasSeleccionadas.includes(c.id))
+      .map((c) => c.texto),
   };
   await guardarCotizacion(emitida);
   await guardarBorradorActivo(null);

@@ -151,27 +151,15 @@ export default function Ajustes() {
           <Campo etiqueta="Garantía del trabajo">
             <textarea rows={2} value={perfil.garantia} onChange={(e) => set({ garantia: e.target.value })} />
           </Campo>
-          <div className="grid-2">
-            <Campo etiqueta="Días de validez">
-              <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                value={perfil.diasValidezPorDefecto}
-                onChange={(e) => set({ diasValidezPorDefecto: Math.max(1, Number(e.target.value) || 1) })}
-              />
-            </Campo>
-            <Campo etiqueta="Anticipo %">
-              <input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={100}
-                value={perfil.anticipoPct}
-                onChange={(e) => set({ anticipoPct: Math.min(100, Math.max(0, Number(e.target.value) || 0)) })}
-              />
-            </Campo>
-          </div>
+          <Campo etiqueta="Días de validez">
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              value={perfil.diasValidezPorDefecto}
+              onChange={(e) => set({ diasValidezPorDefecto: Math.max(1, Number(e.target.value) || 1) })}
+            />
+          </Campo>
           <Campo
             etiqueta="Prefijo del correlativo"
             ayuda="Si algún dia hay un segundo teléfono, cambiale el prefijo para que los números no choquen."
@@ -261,6 +249,145 @@ export default function Ajustes() {
               />
             </Campo>
           ))}
+        </div>
+
+        <div className="tarjeta">
+          <h3>Formas de pago</h3>
+          <p className="mini" style={{ marginBottom: 12 }}>
+            Los porcentajes de cada cuota. Se eligen por cotización en la revisión final.
+          </p>
+          {ajustes.formasPago.map((f, i) => (
+            <div key={f.id} style={{ marginBottom: 14 }}>
+              <label className="fila" style={{ marginBottom: 8, cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="forma-pago-defecto"
+                  style={{ width: 20, height: 20, minHeight: 20, flex: '0 0 auto' }}
+                  checked={perfil.formaPagoPorDefectoId === f.id}
+                  onChange={() => set({ formaPagoPorDefectoId: f.id })}
+                />
+                <strong>{f.nombre}</strong>
+                <span className="mini">{perfil.formaPagoPorDefectoId === f.id ? '(por defecto)' : ''}</span>
+              </label>
+              {f.cuotas.length > 1 && (
+                <div className="grid-2">
+                  {f.cuotas.map((c, j) => (
+                    <Campo key={c.etiqueta} etiqueta={`${c.etiqueta} %`}>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={100}
+                        value={c.pct}
+                        onChange={(e) => {
+                          const pct = Math.min(100, Math.max(0, Number(e.target.value) || 0));
+                          const formasPago = [...ajustes.formasPago];
+                          const cuotas = [...f.cuotas];
+                          cuotas[j] = { ...c, pct };
+                          formasPago[i] = { ...f, cuotas };
+                          setAj({ formasPago });
+                        }}
+                      />
+                    </Campo>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="tarjeta">
+          <h3>Cláusulas</h3>
+          <p className="mini" style={{ marginBottom: 12 }}>
+            Textos reutilizables para agregar al PDF. "Por defecto" las deja pre-marcadas en cada
+            cotización nueva, pero siempre se pueden desmarcar ahí.
+          </p>
+          {ajustes.clausulas.map((cl, i) => (
+            <div key={cl.id} className="tarjeta plana" style={{ marginBottom: 10, padding: 10 }}>
+              <textarea
+                rows={2}
+                value={cl.texto}
+                onChange={(e) => {
+                  const clausulas = [...ajustes.clausulas];
+                  clausulas[i] = { ...cl, texto: e.target.value };
+                  setAj({ clausulas });
+                }}
+              />
+              <div className="fila entre" style={{ marginTop: 8 }}>
+                <label className="fila" style={{ cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    style={{ width: 20, height: 20, minHeight: 20, flex: '0 0 auto' }}
+                    checked={cl.porDefecto}
+                    onChange={(e) => {
+                      const clausulas = [...ajustes.clausulas];
+                      clausulas[i] = { ...cl, porDefecto: e.target.checked };
+                      setAj({ clausulas });
+                    }}
+                  />
+                  <span className="mini">Por defecto</span>
+                </label>
+                <button
+                  type="button"
+                  className="btn chico peligro"
+                  onClick={() => setAj({ clausulas: ajustes.clausulas.filter((c) => c.id !== cl.id) })}
+                >
+                  Quitar
+                </button>
+              </div>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="btn"
+            onClick={() =>
+              setAj({
+                clausulas: [
+                  ...ajustes.clausulas,
+                  { id: `clausula-${Date.now()}`, texto: '', porDefecto: false },
+                ],
+              })
+            }
+          >
+            + Agregar cláusula
+          </button>
+        </div>
+
+        <div className="tarjeta">
+          <h3>Cuenta bancaria</h3>
+          <p className="mini" style={{ marginBottom: 12 }}>
+            Aparece en el PDF para el cliente que prefiera pagar por transferencia.
+          </p>
+          <div className="grid-2">
+            <Campo etiqueta="Banco">
+              <input
+                value={perfil.cuentaBancaria.banco}
+                onChange={(e) => set({ cuentaBancaria: { ...perfil.cuentaBancaria, banco: e.target.value } })}
+              />
+            </Campo>
+            <Campo etiqueta="Tipo de cuenta">
+              <input
+                value={perfil.cuentaBancaria.tipoCuenta}
+                placeholder="Cuenta corriente"
+                onChange={(e) =>
+                  set({ cuentaBancaria: { ...perfil.cuentaBancaria, tipoCuenta: e.target.value } })
+                }
+              />
+            </Campo>
+          </div>
+          <Campo etiqueta="Número de cuenta">
+            <input
+              value={perfil.cuentaBancaria.numero}
+              inputMode="numeric"
+              onChange={(e) => set({ cuentaBancaria: { ...perfil.cuentaBancaria, numero: e.target.value } })}
+            />
+          </Campo>
+          <Campo etiqueta="Titular">
+            <input
+              value={perfil.cuentaBancaria.titular}
+              onChange={(e) => set({ cuentaBancaria: { ...perfil.cuentaBancaria, titular: e.target.value } })}
+            />
+          </Campo>
         </div>
 
         <div className="tarjeta">

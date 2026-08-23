@@ -5,7 +5,7 @@
  */
 import { writeFileSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
-import { PARTIDAS_SEED, MATERIALES_SEED, PERFIL_DEFAULT } from '../src/db/seed';
+import { AJUSTES_DEFAULT, PARTIDAS_SEED, MATERIALES_SEED, PERFIL_DEFAULT } from '../src/db/seed';
 import { calcularMateriales } from '../src/domain/materiales';
 import { renglonDesdePartida } from '../src/domain/cotizacion';
 import { generarCotizacionPdf } from '../src/pdf/cotizacionPdf';
@@ -14,6 +14,11 @@ import type { Cliente, Cotizacion } from '../src/domain/types';
 
 const partida = (id: string, cantidad: number) =>
   renglonDesdePartida(PARTIDAS_SEED.find((p) => p.id === id)!, cantidad);
+
+// PNG minimo (1x1) solo para ejercitar el addImage() de la firma sin
+// arrastrar un archivo de prueba: no importa que no se vea como una firma.
+const FIRMA_PRUEBA =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 
 const cliente: Cliente = {
   id: 'c1',
@@ -41,19 +46,35 @@ const cot: Cotizacion = {
   ],
   tipoObra: 'remodelacion',
   multiplicadorBps: 13000,
+  aplicaIva: true,
   ajustesMateriales: [],
   materialesExtra: [],
   condiciones: PERFIL_DEFAULT.condicionesPorDefecto,
+  firmaClienteDataUrl: FIRMA_PRUEBA,
+  firmadaEn: Date.now(),
+  formaPagoId: 'tres-partes',
+  clausulasSeleccionadas: ['materiales-perdidos'],
+  clausulasCongeladas: [
+    AJUSTES_DEFAULT.clausulas.find((c) => c.id === 'materiales-perdidos')!.texto,
+  ],
   estado: 'enviada',
   creadaEn: Date.now(),
   modificadaEn: Date.now(),
 };
 
-const perfil = { ...PERFIL_DEFAULT, telefono: '7712-4455', correo: 'info@grupofenix.sv', direccion: 'San Salvador', nit: '0614-010190-101-2' };
+const perfil = {
+  ...PERFIL_DEFAULT,
+  telefono: '7712-4455',
+  correo: 'info@grupofenix.sv',
+  direccion: 'San Salvador',
+  nit: '0614-010190-101-2',
+  cuentaBancaria: { banco: 'Banco Agrícola', tipoCuenta: 'Cuenta corriente', numero: '123-456789-0', titular: 'Grupo Fénix S.A de C.V' },
+};
+const formaPago = AJUSTES_DEFAULT.formasPago.find((f) => f.id === cot.formaPagoId)!;
 const filas = calcularMateriales(cot.renglones, MATERIALES_SEED);
 
 const docs: [string, Blob][] = [
-  ['cotizacion', generarCotizacionPdf(cot, perfil, cliente, 'Remodelación')],
+  ['cotizacion', generarCotizacionPdf(cot, perfil, cliente, 'Remodelación', formaPago)],
   ['materiales', generarMaterialesPdf(cot, perfil, cliente, filas)],
 ];
 

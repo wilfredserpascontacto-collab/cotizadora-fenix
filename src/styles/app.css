@@ -307,6 +307,169 @@ p { margin: 0 0 10px; }
 
 .cargando { display: grid; place-items: center; min-height: 60dvh; color: var(--tinta-tenue); }
 
+/* -------------------------------------------------------- boton bateria */
+
+.boton-bateria-envoltura {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+.boton-bateria-envoltura.inactivo { opacity: 0.55; }
+
+.boton-bateria {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  flex: 1;
+  min-height: 56px;
+  border: 2px solid var(--marca);
+  border-radius: 12px 4px 4px 12px;
+  background: var(--marca);
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+.boton-bateria:disabled { cursor: not-allowed; }
+.boton-bateria.grande { min-height: 72px; }
+.boton-bateria.grande .etiqueta-bateria { font-size: 18px; min-height: 68px; }
+.boton-bateria.grande + .bateria-nub { height: 30px; }
+
+/* El relleno es el "liquido": naranja radiactivo, con brillo que viaja
+   pegado al borde de avance, como si el frente del liquido emitiera luz. */
+.boton-bateria .relleno {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background:
+    radial-gradient(ellipse 40px 100% at 100% 50%, rgba(255, 224, 130, 0.85), rgba(255, 224, 130, 0) 70%),
+    linear-gradient(90deg, var(--acento-oscuro), var(--acento) 85%, #ffcf73);
+  z-index: 0;
+}
+.boton-bateria .relleno::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  right: -1px;
+  width: 5px;
+  border-radius: 3px;
+  background: #fff2cf;
+  opacity: 0;
+}
+.boton-bateria.presionando .relleno {
+  width: 100%;
+  transition: width var(--duracion-bateria, 5000ms) linear;
+}
+.boton-bateria.presionando .relleno::after {
+  opacity: 1;
+  animation: borde-radiactivo 850ms ease-in-out infinite;
+}
+.boton-bateria.drenando .relleno {
+  width: 0%;
+  transition: width 250ms ease-out;
+}
+.boton-bateria.drenando .relleno::after { opacity: 1; }
+.boton-bateria.cargando .relleno {
+  width: 100%;
+  animation: bateria-pulso 900ms ease-in-out infinite;
+}
+.boton-bateria.cargando .relleno::after {
+  opacity: 1;
+  animation: borde-radiactivo 850ms ease-in-out infinite;
+}
+
+@keyframes borde-radiactivo {
+  0%, 100% {
+    box-shadow: 0 0 8px 2px rgba(255, 205, 110, 0.85), 0 0 18px 6px rgba(255, 150, 40, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 14px 5px rgba(255, 224, 140, 1), 0 0 30px 12px rgba(255, 150, 40, 0.7);
+  }
+}
+
+.boton-bateria .etiqueta-bateria {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  min-height: 52px;
+  font-weight: 700;
+  color: #fff;
+  font-size: 15.5px;
+}
+
+/* El "polo" de la bateria: la pastillita que sobresale a la derecha.
+   Altura fija: un % no se resuelve dentro de un flex de alto automatico. */
+.bateria-nub {
+  width: 8px;
+  align-self: center;
+  height: 22px;
+  background: var(--marca);
+  border-radius: 0 6px 6px 0;
+  flex: 0 0 auto;
+}
+
+@keyframes bateria-pulso {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boton-bateria.presionando .relleno,
+  .boton-bateria.drenando .relleno { transition-duration: 1ms; }
+  .boton-bateria.cargando .relleno,
+  .boton-bateria .relleno::after { animation: none; }
+}
+
+/* -------------------------------------------------------- lienzo de firma */
+
+.lienzo-firma-envoltura {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--tarjeta);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+  touch-action: none;
+}
+.lienzo-firma-envoltura canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+.lienzo-firma-guia {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 48px;
+  border-bottom: 2px dashed var(--borde);
+}
+.lienzo-firma-etiqueta {
+  position: absolute;
+  left: 24px;
+  bottom: 20px;
+  color: var(--tinta-tenue);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.miniatura-firma {
+  max-width: 160px;
+  max-height: 60px;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: #fff;
+  display: block;
+}
+
 .sin-conexion {
   background: var(--ok-suave);
   color: var(--ok);

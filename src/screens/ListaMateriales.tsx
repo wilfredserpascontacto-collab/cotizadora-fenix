@@ -30,8 +30,8 @@ export default function ListaMateriales() {
         subtitulo="La compra el cliente"
         atras={`/cot/${cot.id}`}
         accion={
-          <button type="button" onClick={() => navigate(`/cot/${cot.id}/resumen`)}>
-            Resumen ›
+          <button type="button" onClick={() => navigate(`/cot/${cot.id}/vista-previa`)}>
+            Vista previa ›
           </button>
         }
       />
@@ -175,8 +175,8 @@ export default function ListaMateriales() {
               </span>
             </span>
           </div>
-          <button type="button" className="btn primario" onClick={() => navigate(`/cot/${cot.id}/resumen`)}>
-            Ir al resumen
+          <button type="button" className="btn primario" onClick={() => navigate(`/cot/${cot.id}/vista-previa`)}>
+            Continuar
           </button>
         </div>
       </div>

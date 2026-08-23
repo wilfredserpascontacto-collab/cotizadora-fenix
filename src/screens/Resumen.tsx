@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { leerAjustes, leerPerfil, proximoCorrelativo } from '../db/db';
-import { emitirCotizacion, guardarCotizacion } from '../db/repo';
-import { anticipoCents, calcularTotales, formatearNumero } from '../domain/cotizacion';
+import { actualizarRenglon, emitirCotizacion, guardarCotizacion } from '../db/repo';
+import { calcularTotales, desglosePago, fmtFecha, formatearNumero } from '../domain/cotizacion';
 import { fmtMoney } from '../domain/money';
-import { IVA_BPS } from '../domain/types';
+import { IVA_BPS, type RenglonInstalacion } from '../domain/types';
 import { useCotizacion, useAviso } from '../state/useCotizacion';
 import { listaDeMateriales, useMateriales } from '../state/useMateriales';
 import { generarCotizacionPdf } from '../pdf/cotizacionPdf';
@@ -13,6 +13,8 @@ import { generarMaterialesPdf } from '../pdf/materialesPdf';
 import { nombreArchivo } from '../pdf/comun';
 import { abrirPdf, enviarPdfs, textoResumen, type ArchivoPdf } from '../share/enviar';
 import { Barra, Campo, Cargando, Hoja, Vacio } from '../components/ui';
+import { EditorPrecio } from '../components/EditorPrecio';
+import { BotonMantener } from '../components/BotonMantener';
 
 export default function Resumen() {
   const { id } = useParams();
@@ -26,6 +28,7 @@ export default function Resumen() {
   const [enviando, setEnviando] = useState(false);
   const [hoja, setHoja] = useState(false);
   const [incluye, setIncluye] = useState({ servicio: true, materiales: true });
+  const [editandoPrecio, setEditandoPrecio] = useState<RenglonInstalacion | null>(null);
   const [aviso, setAviso] = useAviso();
 
   if (cargando || !cot || !filas || !catalogo || !perfil || !ajustes) {
@@ -35,6 +38,8 @@ export default function Resumen() {
   const totales = calcularTotales(cot);
   const tipoObra = ajustes.tiposObra.find((t) => t.id === cot.tipoObra);
   const pctObra = tipoObra ? Math.round(tipoObra.multiplicadorBps / 100 - 100) : 0;
+  const formaPago = ajustes.formasPago.find((f) => f.id === cot.formaPagoId) ?? ajustes.formasPago[0];
+  const cuotas = desglosePago(totales, formaPago);
 
   /** Construye los PDF pedidos. Emite la cotizacion si aun no tenia numero. */
   async function construir(): Promise<{ archivos: ArchivoPdf[]; texto: string }> {
@@ -46,7 +51,7 @@ export default function Resumen() {
     if (incluye.servicio) {
       archivos.push({
         nombre: nombreArchivo(emitida, perfil!, 'cotizacion'),
-        blob: generarCotizacionPdf(emitida, perfil!, cliente, tipoObra?.nombre ?? 'tipo de obra'),
+        blob: generarCotizacionPdf(emitida, perfil!, cliente, tipoObra?.nombre ?? 'tipo de obra', formaPago),
       });
     }
     if (incluye.materiales) {
@@ -85,7 +90,7 @@ export default function Resumen() {
         cual === 'servicio'
           ? {
               nombre: nombreArchivo(emitida, perfil!, 'cotizacion'),
-              blob: generarCotizacionPdf(emitida, perfil!, cliente, tipoObra?.nombre ?? 'tipo de obra'),
+              blob: generarCotizacionPdf(emitida, perfil!, cliente, tipoObra?.nombre ?? 'tipo de obra', formaPago),
             }
           : {
               nombre: nombreArchivo(emitida, perfil!, 'materiales'),
@@ -100,9 +105,9 @@ export default function Resumen() {
   return (
     <>
       <Barra
-        titulo="Resumen"
+        titulo="Revisión de cotización"
         subtitulo={formatearNumero(cot.numero, perfil.prefijoCorrelativo)}
-        atras={`/cot/${cot.id}/materiales`}
+        atras={`/cot/${cot.id}/firma`}
       />
 
       <main className="contenido con-pie">
@@ -119,7 +124,17 @@ export default function Resumen() {
                 <span className="etq">
                   {r.cantidad} × {r.descripcion}
                 </span>
-                <span>{fmtMoney(r.precioManoObraCents * r.cantidad)}</span>
+                <span className="fila" style={{ gap: 8 }}>
+                  {fmtMoney(r.precioManoObraCents * r.cantidad)}
+                  <button
+                    type="button"
+                    className="btn chico fantasma"
+                    style={{ padding: '2px 6px', minHeight: 0 }}
+                    onClick={() => setEditandoPrecio(r)}
+                  >
+                    Precio
+                  </button>
+                </span>
               </li>
             ))}
           </ul>
@@ -142,17 +157,52 @@ export default function Resumen() {
               <span>{fmtMoney(totales.subtotalCents)}</span>
             </div>
             <div className="linea-total">
-              <span className="etq">IVA {IVA_BPS / 100}%</span>
+              <span className="etq">
+                {cot.aplicaIva !== false ? `IVA ${IVA_BPS / 100}%` : 'IVA (cliente exento)'}
+                {' · '}
+                <button
+                  type="button"
+                  className="btn chico fantasma"
+                  style={{ padding: 0, minHeight: 0, textDecoration: 'underline' }}
+                  onClick={() => void guardarCotizacion({ ...cot, aplicaIva: cot.aplicaIva === false })}
+                >
+                  {cot.aplicaIva !== false ? 'quitar IVA' : 'agregar IVA'}
+                </button>
+              </span>
               <span>{fmtMoney(totales.ivaCents)}</span>
             </div>
             <div className="linea-total grande">
               <span>TOTAL</span>
               <span>{fmtMoney(totales.totalCents)}</span>
             </div>
-            {perfil.anticipoPct > 0 && (
-              <p className="mini" style={{ marginTop: 6 }}>
-                Anticipo del {perfil.anticipoPct}%: {fmtMoney(anticipoCents(totales, perfil.anticipoPct))}
-              </p>
+          </div>
+
+          <div style={{ marginTop: 14, borderTop: '1px solid var(--borde)', paddingTop: 10 }}>
+            <span className="mini" style={{ fontWeight: 600 }}>Forma de pago</span>
+            <div className="chips" role="group" aria-label="Forma de pago" style={{ marginTop: 6 }}>
+              {ajustes.formasPago.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  className="chip"
+                  aria-pressed={cot.formaPagoId === f.id}
+                  onClick={() => void guardarCotizacion({ ...cot, formaPagoId: f.id })}
+                >
+                  {f.nombre}
+                </button>
+              ))}
+            </div>
+            {cuotas.length > 1 && (
+              <ul className="lista-limpia" style={{ marginTop: 8 }}>
+                {cuotas.map((c) => (
+                  <li key={c.etiqueta} className="linea-total">
+                    <span className="etq">
+                      {c.etiqueta} ({c.pct}%)
+                    </span>
+                    <span>{fmtMoney(c.montoCents)}</span>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </div>
@@ -173,6 +223,69 @@ export default function Resumen() {
             Revisar la lista
           </button>
         </div>
+
+        {/* Bloque 3: la firma que va a quedar puesta en el PDF. */}
+        <div className="tarjeta">
+          <h3>Firma del cliente</h3>
+          {cot.firmaClienteDataUrl ? (
+            <>
+              <img src={cot.firmaClienteDataUrl} alt="Firma del cliente" className="miniatura-firma" />
+              <p className="mini" style={{ marginTop: 8 }}>
+                {cot.firmadaEn ? `Firmada el ${fmtFecha(cot.firmadaEn)}.` : 'Firmada.'} Así va a salir en el
+                PDF de cotización.
+              </p>
+              <button
+                type="button"
+                className="btn chico"
+                style={{ marginTop: 4 }}
+                onClick={() => navigate(`/cot/${cot.id}/firma`)}
+              >
+                Volver a firmar
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="mini">Todavía no hay firma. Se puede enviar igual sin ella.</p>
+              <button
+                type="button"
+                className="btn chico"
+                onClick={() => navigate(`/cot/${cot.id}/firma`)}
+              >
+                Firmar ahora
+              </button>
+            </>
+          )}
+        </div>
+
+        {ajustes.clausulas.length > 0 && (
+          <div className="tarjeta">
+            <h3>Cláusulas</h3>
+            <p className="mini" style={{ marginBottom: 10 }}>
+              Las marcadas se agregan al PDF de esta cotización.
+            </p>
+            {ajustes.clausulas.map((cl) => {
+              const marcada = cot.clausulasSeleccionadas.includes(cl.id);
+              return (
+                <label key={cl.id} className="item-catalogo" style={{ cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    style={{ width: 22, height: 22, minHeight: 22, flex: '0 0 auto' }}
+                    checked={marcada}
+                    onChange={(e) =>
+                      void guardarCotizacion({
+                        ...cot,
+                        clausulasSeleccionadas: e.target.checked
+                          ? [...cot.clausulasSeleccionadas, cl.id]
+                          : cot.clausulasSeleccionadas.filter((id) => id !== cl.id),
+                      })
+                    }
+                  />
+                  <span className="nombre" style={{ fontWeight: 400 }}>{cl.texto}</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
 
         <div className="tarjeta">
           <h3>Condiciones</h3>
@@ -247,7 +360,7 @@ export default function Resumen() {
             <span className="nombre">
               Cotización de servicio
               <span className="mini" style={{ display: 'block', fontWeight: 400 }}>
-                {fmtMoney(totales.totalCents)} con IVA
+                {fmtMoney(totales.totalCents)} {cot.aplicaIva !== false ? 'con IVA' : 'sin IVA'}
               </span>
             </span>
           </label>
@@ -274,20 +387,35 @@ export default function Resumen() {
             </p>
           )}
 
-          <button
-            type="button"
-            className="btn primario"
-            style={{ marginTop: 12 }}
-            disabled={(!incluye.servicio && !incluye.materiales) || enviando}
-            onClick={() => void enviar()}
-          >
-            {enviando ? 'Generando…' : 'Enviar por WhatsApp'}
-          </button>
+          <div style={{ marginTop: 12 }}>
+            <BotonMantener
+              etiqueta="Enviar por WhatsApp"
+              etiquetaCargando="Generando…"
+              duracionMs={5000}
+              cargando={enviando}
+              disabled={!incluye.servicio && !incluye.materiales}
+              onCompletar={() => void enviar()}
+            />
+          </div>
           <p className="mini" style={{ marginTop: 10, marginBottom: 0 }}>
-            Si el teléfono no deja compartir archivos, se descargan los PDF y se abre el chat para que
-            los adjunte.
+            Mantené presionado hasta que se llene para enviar. Si el teléfono no deja compartir
+            archivos, se descargan los PDF y se abre el chat para que los adjunte.
           </p>
         </Hoja>
+      )}
+
+      {editandoPrecio && (
+        <EditorPrecio
+          renglon={editandoPrecio}
+          onCerrar={() => setEditandoPrecio(null)}
+          onGuardar={async (cents) => {
+            await actualizarRenglon(cot, editandoPrecio.id, {
+              precioManoObraCents: cents,
+              precioEditado: cents !== editandoPrecio.precioManoObraCents || editandoPrecio.precioEditado,
+            });
+            setEditandoPrecio(null);
+          }}
+        />
       )}
     </>
   );

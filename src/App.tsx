@@ -6,6 +6,8 @@ import Inicio from './screens/Inicio';
 import NuevaCotizacion from './screens/NuevaCotizacion';
 import ArmarCotizacion from './screens/ArmarCotizacion';
 import ListaMateriales from './screens/ListaMateriales';
+import VistaPrevia from './screens/VistaPrevia';
+import Firma from './screens/Firma';
 import Resumen from './screens/Resumen';
 import Historial from './screens/Historial';
 import Catalogos from './screens/Catalogos';
@@ -31,6 +33,8 @@ export default function App() {
         <Route path="/nueva" element={<NuevaCotizacion />} />
         <Route path="/cot/:id" element={<ArmarCotizacion />} />
         <Route path="/cot/:id/materiales" element={<ListaMateriales />} />
+        <Route path="/cot/:id/vista-previa" element={<VistaPrevia />} />
+        <Route path="/cot/:id/firma" element={<Firma />} />
         <Route path="/cot/:id/resumen" element={<Resumen />} />
         <Route path="/historial" element={<Historial />} />
         <Route path="/catalogos" element={<Catalogos />} />

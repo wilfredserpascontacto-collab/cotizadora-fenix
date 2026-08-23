@@ -9,10 +9,11 @@ import {
   quitarRenglon,
 } from '../db/repo';
 import { calcularTotales } from '../domain/cotizacion';
-import { centsToInput, fmtMoney, parseCents } from '../domain/money';
+import { fmtMoney } from '../domain/money';
 import { CATEGORIAS, type CategoriaPartida, type RenglonInstalacion } from '../domain/types';
 import { useCotizacion } from '../state/useCotizacion';
-import { Barra, Campo, Cargando, Contador, Hoja, Vacio } from '../components/ui';
+import { Barra, Cargando, Contador, Vacio } from '../components/ui';
+import { EditorPrecio } from '../components/EditorPrecio';
 
 export default function ArmarCotizacion() {
   const { id } = useParams();
@@ -209,41 +210,5 @@ export default function ArmarCotizacion() {
         />
       )}
     </>
-  );
-}
-
-/** Edita el precio de UN renglon. El catalogo no se toca. */
-function EditorPrecio({
-  renglon,
-  onCerrar,
-  onGuardar,
-}: {
-  renglon: RenglonInstalacion;
-  onCerrar: () => void;
-  onGuardar: (cents: number) => void;
-}) {
-  const [texto, setTexto] = useState(centsToInput(renglon.precioManoObraCents));
-  const cents = parseCents(texto);
-  return (
-    <Hoja titulo={renglon.descripcion} onCerrar={onCerrar}>
-      <Campo
-        etiqueta={`Precio de mano de obra por ${renglon.unidad}`}
-        ayuda="Solo cambia esta cotización. El catálogo queda igual."
-      >
-        <input
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          inputMode="decimal"
-          autoFocus
-          style={{ fontSize: 22, fontWeight: 700 }}
-        />
-      </Campo>
-      <p className="mini">
-        {renglon.cantidad} x {fmtMoney(cents)} = <strong>{fmtMoney(cents * renglon.cantidad)}</strong>
-      </p>
-      <button type="button" className="btn primario" onClick={() => onGuardar(cents)}>
-        Guardar precio
-      </button>
-    </Hoja>
   );
 }

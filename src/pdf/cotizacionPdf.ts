@@ -1,9 +1,9 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { anticipoCents, calcularTotales } from '../domain/cotizacion';
+import { calcularTotales, desglosePago } from '../domain/cotizacion';
 import { fmtMoney } from '../domain/money';
-import type { Cliente, Cotizacion, PerfilEmpresa } from '../domain/types';
-import { ANCHO, GRIS, LINEA, MARGEN, TINTA, bloqueCliente, caja, encabezado, pies } from './comun';
+import type { Cliente, Cotizacion, FormaPago, PerfilEmpresa } from '../domain/types';
+import { ANCHO, GRIS, LINEA, MARGEN, TINTA, bloqueCliente, encabezado, pies } from './comun';
 
 /**
  * Cotización de servicio: la cara del negocio de Francisco frente a su cliente.
@@ -14,6 +14,7 @@ export function generarCotizacionPdf(
   perfil: PerfilEmpresa,
   cliente: Cliente | null,
   tipoObraNombre: string,
+  formaPago: FormaPago,
 ): Blob {
   const doc = new jsPDF({ unit: 'pt', format: 'letter', compress: true });
   const c = cot.clienteSnapshot ?? cliente;
@@ -82,7 +83,7 @@ export function generarCotizacionPdf(
     linea(`Ajuste por ${tipoObraNombre.toLowerCase()}`, fmtMoney(totales.ajusteObraCents));
   }
   linea('Subtotal', fmtMoney(totales.subtotalCents));
-  linea('IVA 13%', fmtMoney(totales.ivaCents));
+  linea(cot.aplicaIva !== false ? 'IVA 13%' : 'IVA (cliente exento)', fmtMoney(totales.ivaCents));
 
   doc.setDrawColor(...TINTA);
   doc.setLineWidth(1.2);
@@ -90,14 +91,7 @@ export function generarCotizacionPdf(
   y += 8;
   linea('TOTAL A PAGAR', fmtMoney(totales.totalCents), true);
 
-  y += 6;
-  y = caja(
-    doc,
-    y,
-    'Este precio corresponde ÚNICAMENTE a mano de obra e instalación. Los materiales corren por cuenta del cliente y se detallan en la lista de compra que acompaña esta cotización.',
-    [180, 83, 9],
-    [255, 251, 235],
-  );
+  y += 18;
 
   // Condiciones
   y = espacioSuficiente(doc, y, 150, perfil, cot);
@@ -111,16 +105,29 @@ export function generarCotizacionPdf(
   doc.setTextColor(...TINTA);
   doc.setFontSize(9.5);
 
+  const cuotas = desglosePago(totales, formaPago);
+  const textoFormaPago =
+    cuotas.length <= 1
+      ? `Forma de pago: ${formaPago.nombre} (${fmtMoney(totales.totalCents)}).`
+      : `Forma de pago: ${formaPago.nombre} — ${cuotas
+          .map((c) => `${c.etiqueta} ${fmtMoney(c.montoCents)}`)
+          .join(', ')}.`;
+
+  const cuenta = perfil.cuentaBancaria;
+  const textoTransferencia =
+    cuenta?.numero &&
+    `Si prefiere pagar por transferencia: ${[cuenta.banco, cuenta.tipoCuenta, cuenta.numero]
+      .filter(Boolean)
+      .join(' — ')}${cuenta.titular ? `, a nombre de ${cuenta.titular}` : ''}.`;
+
   const condiciones = [
-    perfil.anticipoPct > 0
-      ? `Forma de pago: ${perfil.anticipoPct}% de anticipo (${fmtMoney(
-          anticipoCents(totales, perfil.anticipoPct),
-        )}) y el saldo contra entrega del trabajo.`
-      : 'Forma de pago: contra entrega del trabajo.',
+    textoFormaPago,
     `Validez de la oferta: ${cot.diasValidez} días a partir de la fecha de emisión.`,
     perfil.garantia && `Garantía: ${perfil.garantia}`,
     ...cot.condiciones.split('\n').map((s) => s.trim()).filter(Boolean),
     cot.notas && `Notas: ${cot.notas}`,
+    ...(cot.clausulasCongeladas ?? []),
+    textoTransferencia,
   ].filter(Boolean) as string[];
 
   for (const cond of condiciones) {
@@ -130,17 +137,26 @@ export function generarCotizacionPdf(
     y += lineas.length * 12 + 3;
   }
 
-  // Espacio de firma
+  // Espacio de firma. Si el cliente firmo en el telefono, la imagen va
+  // pegada encima de su linea; si no, queda la linea en blanco de siempre.
   y = espacioSuficiente(doc, y + 24, 90, perfil, cot);
   const anchoFirma = 200;
+  const xFirmaCliente = ANCHO - MARGEN - anchoFirma;
+  if (cot.firmaClienteDataUrl) {
+    try {
+      doc.addImage(cot.firmaClienteDataUrl, 'PNG', xFirmaCliente + 10, y - 4, anchoFirma - 20, 34, undefined, 'FAST');
+    } catch {
+      // Una firma corrupta no puede tumbar la cotizacion: se cae al espacio en blanco.
+    }
+  }
   doc.setDrawColor(...GRIS);
   doc.setLineWidth(0.8);
   doc.line(MARGEN, y + 34, MARGEN + anchoFirma, y + 34);
-  doc.line(ANCHO - MARGEN - anchoFirma, y + 34, ANCHO - MARGEN, y + 34);
+  doc.line(xFirmaCliente, y + 34, ANCHO - MARGEN, y + 34);
   doc.setFontSize(9);
   doc.setTextColor(...GRIS);
   doc.text(perfil.nombre || 'Grupo Fénix', MARGEN, y + 48);
-  doc.text('Acepta el cliente', ANCHO - MARGEN - anchoFirma, y + 48);
+  doc.text('Acepta el cliente', xFirmaCliente, y + 48);
 
   pies(doc, perfil);
   return doc.output('blob');

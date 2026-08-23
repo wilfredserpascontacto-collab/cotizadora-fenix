@@ -81,7 +81,9 @@ export function textoResumen(
       perfil.prefijoCorrelativo,
     )} de ${perfil.nombre || 'Grupo Fénix'}.`,
     '',
-    `Mano de obra e instalación: ${fmtMoney(totales.totalCents)} (IVA incluido).`,
+    `Mano de obra e instalación: ${fmtMoney(totales.totalCents)} (${
+      cot.aplicaIva !== false ? 'IVA incluido' : 'exento de IVA'
+    }).`,
   ];
   if (incluyeMateriales) {
     lineas.push(

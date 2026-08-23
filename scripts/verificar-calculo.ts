@@ -39,7 +39,7 @@ console.log('3 tomas: bruto', c1.brutoMilli / 1000, 'm ->', c1.unidadesVenta, 'r
 
 // Totales: solo mano de obra, IVA 13%, materiales fuera.
 for (const bps of [10000, 13000]) {
-  const t = calcularTotales({ renglones, multiplicadorBps: bps });
+  const t = calcularTotales({ renglones, multiplicadorBps: bps, aplicaIva: true });
   console.log(
     `x${bps / 10000}`,
     'mano de obra', fmtMoney(t.manoObraCents),
@@ -49,3 +49,7 @@ for (const bps of [10000, 13000]) {
     'TOTAL', fmtMoney(t.totalCents),
   );
 }
+
+// Cliente exento de IVA: el total no lleva el 13% pero el subtotal es igual.
+const exento = calcularTotales({ renglones, multiplicadorBps: 10000, aplicaIva: false });
+console.log('exento de IVA', 'subtotal', fmtMoney(exento.subtotalCents), 'iva', fmtMoney(exento.ivaCents), 'TOTAL', fmtMoney(exento.totalCents));

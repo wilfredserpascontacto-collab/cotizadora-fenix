@@ -45,7 +45,8 @@ export type CategoriaMaterial =
   | 'tierra'
   | 'accesorios'
   | 'datos'
-  | 'climatizacion';
+  | 'climatizacion'
+  | 'acometida';
 
 /** Unidad en la que se mide el consumo dentro de una receta. */
 export type UnidadMedida = 'm' | 'u';
@@ -90,6 +91,35 @@ export interface AjusteTipoObra {
   descripcion: string;
   /** Multiplicador sobre la MANO DE OBRA. Nunca sobre las cantidades de material. */
   multiplicadorBps: Bps;
+}
+
+export type FormaPagoId = 'completo' | 'anticipo50' | 'tres-partes';
+
+export interface CuotaFormaPago {
+  etiqueta: string;
+  /** Porcentaje del total. Las cuotas de una forma de pago deberian sumar 100. */
+  pct: number;
+}
+
+export interface FormaPago {
+  id: FormaPagoId;
+  nombre: string;
+  cuotas: CuotaFormaPago[];
+}
+
+/** Texto reutilizable que Francisco puede sumar a una cotizacion puntual. */
+export interface Clausula {
+  id: string;
+  texto: string;
+  /** Si viene pre-marcada al crear una cotizacion nueva. */
+  porDefecto: boolean;
+}
+
+export interface CuentaBancaria {
+  banco: string;
+  tipoCuenta: string;
+  numero: string;
+  titular: string;
 }
 
 export interface Cliente {
@@ -153,12 +183,22 @@ export interface Cotizacion {
   renglones: RenglonInstalacion[];
   tipoObra: TipoObra;
   multiplicadorBps: Bps;
+  /** No todos los clientes llevan IVA en la factura. */
+  aplicaIva: boolean;
   ajustesMateriales: AjusteMaterial[];
   materialesExtra: MaterialExtra[];
   /** Materiales congelados al emitir, para que la lista no cambie despues. */
   materialesCongelados?: Material[];
   notas?: string;
   condiciones: string;
+  /** Firma del cliente, capturada en el telefono al aceptar in situ. Opcional. */
+  firmaClienteDataUrl?: string;
+  firmadaEn?: number;
+  formaPagoId: FormaPagoId;
+  /** Ids de clausulas del catalogo que aplican a esta cotizacion. */
+  clausulasSeleccionadas: string[];
+  /** Textos resueltos al emitir, para que no cambien si Francisco edita el catalogo despues. */
+  clausulasCongeladas?: string[];
   estado: EstadoCotizacion;
   creadaEn: number;
   modificadaEn: number;
@@ -183,10 +223,11 @@ export interface PerfilEmpresa {
   nrc?: string;
   condicionesPorDefecto: string;
   diasValidezPorDefecto: number;
-  anticipoPct: number;
   garantia: string;
   /** Prefijo del correlativo. Sirve de desempate si algun dia hay dos telefonos. */
   prefijoCorrelativo: string;
+  formaPagoPorDefectoId: FormaPagoId;
+  cuentaBancaria: CuentaBancaria;
 }
 
 export interface Ajustes {
@@ -194,4 +235,6 @@ export interface Ajustes {
   holguraTuberiaPct: number;
   holguraGeneralPct: number;
   tiposObra: AjusteTipoObra[];
+  formasPago: FormaPago[];
+  clausulas: Clausula[];
 }

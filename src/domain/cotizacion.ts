@@ -1,5 +1,5 @@
 import { aplicarBps, pctDe } from './money';
-import type { Cents, Cotizacion, EstadoCotizacion, Partida, RenglonInstalacion } from './types';
+import type { Cents, Cotizacion, EstadoCotizacion, FormaPago, Partida, RenglonInstalacion } from './types';
 import { IVA_BPS } from './types';
 
 export interface TotalesCotizacion {
@@ -18,7 +18,9 @@ export interface TotalesCotizacion {
  * Totales de la cotizacion de SERVICIO.
  * Solo mano de obra. El monto de materiales jamas se suma aqui.
  */
-export function calcularTotales(cot: Pick<Cotizacion, 'renglones' | 'multiplicadorBps'>): TotalesCotizacion {
+export function calcularTotales(
+  cot: Pick<Cotizacion, 'renglones' | 'multiplicadorBps' | 'aplicaIva'>,
+): TotalesCotizacion {
   const manoObraCents = cot.renglones.reduce(
     (suma, r) => suma + subtotalRenglon(r),
     0,
@@ -26,7 +28,8 @@ export function calcularTotales(cot: Pick<Cotizacion, 'renglones' | 'multiplicad
   const conMultiplicador = aplicarBps(manoObraCents, cot.multiplicadorBps);
   const ajusteObraCents = conMultiplicador - manoObraCents;
   const subtotalCents = conMultiplicador;
-  const ivaCents = aplicarBps(subtotalCents, IVA_BPS);
+  // === false, no !cot.aplicaIva: una cotizacion vieja sin este campo sigue llevando IVA como antes.
+  const ivaCents = cot.aplicaIva === false ? 0 : aplicarBps(subtotalCents, IVA_BPS);
   return {
     manoObraCents,
     ajusteObraCents,
@@ -40,8 +43,25 @@ export function subtotalRenglon(r: RenglonInstalacion): Cents {
   return r.precioManoObraCents * r.cantidad;
 }
 
-export function anticipoCents(totales: TotalesCotizacion, anticipoPct: number): Cents {
-  return pctDe(totales.totalCents, anticipoPct);
+export interface CuotaCalculada {
+  etiqueta: string;
+  pct: number;
+  montoCents: Cents;
+}
+
+/**
+ * Reparte el total en las cuotas de la forma de pago. La ultima cuota
+ * absorbe el residuo del redondeo, para que la suma de las cuotas sea
+ * siempre exactamente el total (nunca un centavo de mas o de menos).
+ */
+export function desglosePago(totales: TotalesCotizacion, formaPago: FormaPago): CuotaCalculada[] {
+  let acumulado = 0;
+  return formaPago.cuotas.map((c, i) => {
+    const esUltima = i === formaPago.cuotas.length - 1;
+    const montoCents = esUltima ? totales.totalCents - acumulado : pctDe(totales.totalCents, c.pct);
+    acumulado += montoCents;
+    return { etiqueta: c.etiqueta, pct: c.pct, montoCents };
+  });
 }
 
 /** Congela nombre, precio y receta de la partida en el renglon. */
