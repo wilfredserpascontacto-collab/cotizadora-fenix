@@ -25,6 +25,15 @@ export default function Resumen() {
   const siguienteNumero = useLiveQuery(() => proximoCorrelativo(), []);
 
   const [enviando, setEnviando] = useState(false);
+  /**
+   * PDF ya generados, esperando el toque que los comparte.
+   *
+   * Van en dos pasos por obligacion del navegador, no por gusto: compartir
+   * exige una interaccion del usuario reciente, y armar los dos PDF tarda mas
+   * de lo que dura esa ventana. Generando primero, el segundo toque llama a
+   * compartir sin nada en medio y el gesto sigue fresco.
+   */
+  const [listos, setListos] = useState<{ archivos: ArchivoPdf[]; texto: string } | null>(null);
   /** Plan B: no se pudo compartir, quedan los PDF descargados y el chat a mano. */
   const [respaldo, setRespaldo] = useState<{ motivo: string; url: string } | null>(null);
   const [hoja, setHoja] = useState(false);
@@ -65,26 +74,51 @@ export default function Resumen() {
     return { archivos, texto };
   }
 
-  async function enviar() {
+  /** Paso 1: emite el correlativo y arma los PDF. Puede tardar unos segundos. */
+  async function generar() {
     if (enviando) return;
     setEnviando(true);
     setRespaldo(null);
     try {
-      const { archivos, texto } = await construir();
-      const r = await enviarPdfs(archivos, texto, (cot!.clienteSnapshot ?? cliente)?.telefono);
-      if (r.estado === 'compartido') {
-        setHoja(false);
-        setAviso('Enviado.');
-      } else if (r.estado === 'descargado') {
-        // La hoja queda abierta a proposito: ahi vive el boton de WhatsApp.
-        setRespaldo({ motivo: r.motivo, url: r.urlWhatsApp });
-      }
+      setListos(await construir());
     } catch (e) {
       console.error(e);
       setAviso('No se pudo generar el PDF. Intenta de nuevo.');
     } finally {
       setEnviando(false);
     }
+  }
+
+  /**
+   * Paso 2: comparte. No es async a proposito y no espera nada antes de
+   * llamar a enviarPdfs: la llamada a navigator.share tiene que salir dentro
+   * del mismo toque o el navegador la rechaza con NotAllowedError.
+   */
+  function compartir() {
+    if (!listos) return;
+    setRespaldo(null);
+    void enviarPdfs(listos.archivos, listos.texto, (cot!.clienteSnapshot ?? cliente)?.telefono)
+      .then((r) => {
+        if (r.estado === 'compartido') {
+          setHoja(false);
+          setListos(null);
+          setAviso('Enviado.');
+        } else if (r.estado === 'descargado') {
+          // La hoja queda abierta a proposito: ahi vive el boton de WhatsApp.
+          setRespaldo({ motivo: r.motivo, url: r.urlWhatsApp });
+        }
+      })
+      .catch((e) => {
+        console.error(e);
+        setAviso('No se pudo compartir. Intenta de nuevo.');
+      });
+  }
+
+  /** Cambiar que se manda invalida lo ya generado. */
+  function alternarIncluye(cual: 'servicio' | 'materiales', valor: boolean) {
+    setIncluye((v) => ({ ...v, [cual]: valor }));
+    setListos(null);
+    setRespaldo(null);
   }
 
   async function verPdf(cual: 'servicio' | 'materiales') {
@@ -363,7 +397,7 @@ export default function Resumen() {
               type="checkbox"
               style={{ width: 24, height: 24, minHeight: 24, flex: '0 0 auto' }}
               checked={incluye.servicio}
-              onChange={(e) => setIncluye((v) => ({ ...v, servicio: e.target.checked }))}
+              onChange={(e) => alternarIncluye('servicio', e.target.checked)}
             />
             <span className="nombre">
               Cotización de servicio
@@ -377,7 +411,7 @@ export default function Resumen() {
               type="checkbox"
               style={{ width: 24, height: 24, minHeight: 24, flex: '0 0 auto' }}
               checked={incluye.materiales}
-              onChange={(e) => setIncluye((v) => ({ ...v, materiales: e.target.checked }))}
+              onChange={(e) => alternarIncluye('materiales', e.target.checked)}
             />
             <span className="nombre">
               Lista de materiales
@@ -387,49 +421,67 @@ export default function Resumen() {
             </span>
           </label>
 
-          {cot.numero === null && (
+          {cot.numero === null && !listos && (
             <p className="mini" style={{ marginTop: 10 }}>
-              Al enviar se le asigna el numero{' '}
+              Al generar se le asigna el numero{' '}
               <strong>{formatearNumero(siguienteNumero ?? null, perfil.prefijoCorrelativo)}</strong> y la
               cotización queda en el historial.
             </p>
           )}
 
-          <div style={{ marginTop: 12 }}>
-            {/* Boton normal: compartir exige un gesto reciente del usuario, asi
-                que la llamada tiene que salir del propio toque, sin esperas. */}
-            <button
-              type="button"
-              className="btn primario"
-              style={{ width: '100%' }}
-              disabled={enviando || (!incluye.servicio && !incluye.materiales)}
-              onClick={() => void enviar()}
-            >
-              {enviando ? 'Generando…' : 'Enviar por WhatsApp'}
-            </button>
-          </div>
-
-          {respaldo ? (
-            <div className="aviso info" style={{ marginTop: 12 }}>
-              <p style={{ marginTop: 0 }}>
-                {respaldo.motivo} Los PDF quedaron descargados: abrí el chat y adjuntalos desde el
-                clip.
+          {!listos ? (
+            <>
+              <div style={{ marginTop: 12 }}>
+                <button
+                  type="button"
+                  className="btn primario"
+                  style={{ width: '100%' }}
+                  disabled={enviando || (!incluye.servicio && !incluye.materiales)}
+                  onClick={() => void generar()}
+                >
+                  {enviando ? 'Generando…' : 'Generar los PDF'}
+                </button>
+              </div>
+              <p className="mini" style={{ marginTop: 10, marginBottom: 0 }}>
+                Primero se arman los archivos; después los mandás. Son dos toques porque el
+                navegador sólo deja compartir en el momento justo en que tocás.
               </p>
-              <a
-                className="btn primario"
-                style={{ width: '100%' }}
-                href={respaldo.url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Abrir el chat de WhatsApp
-              </a>
-            </div>
+            </>
           ) : (
-            <p className="mini" style={{ marginTop: 10, marginBottom: 0 }}>
-              Se abre la hoja de compartir del teléfono con los PDF adjuntos. Si el teléfono no lo
-              permite, se descargan y te digo por qué.
-            </p>
+            <>
+              <p className="mini" style={{ marginTop: 12, marginBottom: 0 }}>
+                {listos.archivos.length === 1 ? 'Archivo listo' : `${listos.archivos.length} archivos listos`}.
+              </p>
+              <div style={{ marginTop: 8 }}>
+                {/* Sin nada en medio: navigator.share sale del propio toque. */}
+                <button
+                  type="button"
+                  className="btn primario"
+                  style={{ width: '100%' }}
+                  onClick={compartir}
+                >
+                  Enviar por WhatsApp
+                </button>
+              </div>
+
+              {respaldo && (
+                <div className="aviso info" style={{ marginTop: 12 }}>
+                  <p style={{ marginTop: 0 }}>
+                    {respaldo.motivo} Los PDF quedaron descargados: abrí el chat y adjuntalos desde
+                    el clip.
+                  </p>
+                  <a
+                    className="btn primario"
+                    style={{ width: '100%' }}
+                    href={respaldo.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Abrir el chat de WhatsApp
+                  </a>
+                </div>
+              )}
+            </>
           )}
         </Hoja>
       )}
