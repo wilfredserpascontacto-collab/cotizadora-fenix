@@ -63,9 +63,20 @@ export async function escribirMeta(clave: string, valor: unknown): Promise<void>
   await db.meta.put({ clave, valor });
 }
 
-export const leerPerfil = () => leerMeta<PerfilEmpresa>(META.perfil, PERFIL_DEFAULT);
+/**
+ * Se completa con los valores por defecto para los campos que falten: un
+ * perfil guardado antes de que existiera, por ejemplo, "cuentaBancaria" no
+ * lo tiene, y sin este merge la pantalla de Ajustes truena en blanco.
+ */
+export const leerPerfil = async (): Promise<PerfilEmpresa> => ({
+  ...PERFIL_DEFAULT,
+  ...(await leerMeta<Partial<PerfilEmpresa>>(META.perfil, PERFIL_DEFAULT)),
+});
 export const guardarPerfil = (p: PerfilEmpresa) => escribirMeta(META.perfil, p);
-export const leerAjustes = () => leerMeta<Ajustes>(META.ajustes, AJUSTES_DEFAULT);
+export const leerAjustes = async (): Promise<Ajustes> => ({
+  ...AJUSTES_DEFAULT,
+  ...(await leerMeta<Partial<Ajustes>>(META.ajustes, AJUSTES_DEFAULT)),
+});
 export const guardarAjustes = (a: Ajustes) => escribirMeta(META.ajustes, a);
 
 // ---------------------------------------------------------------------------

@@ -264,7 +264,9 @@ export default function Resumen() {
               Las marcadas se agregan al PDF de esta cotización.
             </p>
             {ajustes.clausulas.map((cl) => {
-              const marcada = cot.clausulasSeleccionadas.includes(cl.id);
+              // ?? []: una cotizacion armada antes de que existiera este campo no lo trae.
+              const seleccionadas = cot.clausulasSeleccionadas ?? [];
+              const marcada = seleccionadas.includes(cl.id);
               return (
                 <label key={cl.id} className="item-catalogo" style={{ cursor: 'pointer' }}>
                   <input
@@ -275,8 +277,8 @@ export default function Resumen() {
                       void guardarCotizacion({
                         ...cot,
                         clausulasSeleccionadas: e.target.checked
-                          ? [...cot.clausulasSeleccionadas, cl.id]
-                          : cot.clausulasSeleccionadas.filter((id) => id !== cl.id),
+                          ? [...seleccionadas, cl.id]
+                          : seleccionadas.filter((id) => id !== cl.id),
                       })
                     }
                   />

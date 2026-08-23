@@ -169,7 +169,7 @@ export async function emitirCotizacion(cot: Cotizacion): Promise<Cotizacion> {
     clienteSnapshot: cliente,
     materialesCongelados: materiales.filter((m) => usados.has(m.id)),
     clausulasCongeladas: ajustes.clausulas
-      .filter((c) => cot.clausulasSeleccionadas.includes(c.id))
+      .filter((c) => (cot.clausulasSeleccionadas ?? []).includes(c.id))
       .map((c) => c.texto),
   };
   await guardarCotizacion(emitida);
