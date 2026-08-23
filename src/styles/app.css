@@ -365,6 +365,14 @@ p { margin: 0 0 10px; }
   opacity: 1;
   animation: borde-radiactivo 850ms ease-in-out infinite;
 }
+/* Lleno: la barra llego al tope y espera que suelten el dedo para disparar. */
+.boton-bateria.lleno .relleno {
+  width: 100%;
+}
+.boton-bateria.lleno .relleno::after {
+  opacity: 1;
+  animation: borde-radiactivo 850ms ease-in-out infinite;
+}
 .boton-bateria.drenando .relleno {
   width: 0%;
   transition: width 250ms ease-out;

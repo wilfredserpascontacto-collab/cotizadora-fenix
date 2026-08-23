@@ -32,7 +32,9 @@ export async function enviarPdfs(
     } catch (e) {
       // El usuario cerró la hoja de compartir: no es un error que reportar.
       if ((e as DOMException)?.name === 'AbortError') return 'cancelado';
-      // Cualquier otra falla cae al plan B.
+      // Cualquier otra falla cae al plan B, pero dejando rastro: el caso
+      // tipico es NotAllowedError por gesto vencido, y sin esto no se ve.
+      console.warn('No se pudo compartir, se descargan los PDF:', (e as Error)?.name, e);
     }
   }
 
@@ -54,8 +56,18 @@ export function descargar({ nombre, blob }: ArchivoPdf) {
 
 export function abrirPdf({ blob }: ArchivoPdf) {
   const url = URL.createObjectURL(blob);
-  window.open(url, '_blank', 'noopener');
+  abrirEnlace(url);
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+/**
+ * Abre un enlace en otra pestana, y si el navegador lo bloquea, navega en la
+ * actual. En una PWA instalada window.open devuelve null bastante seguido, y
+ * sin este respaldo el chat de WhatsApp simplemente no se abria nunca.
+ */
+function abrirEnlace(url: string) {
+  const ventana = window.open(url, '_blank', 'noopener');
+  if (!ventana) window.location.href = url;
 }
 
 function abrirWhatsApp(texto: string, telefono?: string) {
@@ -63,7 +75,7 @@ function abrirWhatsApp(texto: string, telefono?: string) {
   const limpio = (telefono ?? '').replace(/\D/g, '');
   const numero = limpio.length === 8 ? `503${limpio}` : limpio;
   const base = numero ? `https://wa.me/${numero}` : 'https://wa.me/';
-  window.open(`${base}?text=${encodeURIComponent(texto)}`, '_blank', 'noopener');
+  abrirEnlace(`${base}?text=${encodeURIComponent(texto)}`);
 }
 
 /** Texto que acompaña los PDF en el chat. */

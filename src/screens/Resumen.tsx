@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { leerAjustes, leerPerfil, proximoCorrelativo } from '../db/db';
@@ -26,6 +26,9 @@ export default function Resumen() {
   const siguienteNumero = useLiveQuery(() => proximoCorrelativo(), []);
 
   const [enviando, setEnviando] = useState(false);
+  // Los PDF se van generando mientras el boton se llena, para que al soltar el
+  // dedo no quede nada que esperar antes de llamar a navigator.share.
+  const preparacionRef = useRef<Promise<{ archivos: ArchivoPdf[]; texto: string }> | null>(null);
   const [hoja, setHoja] = useState(false);
   const [incluye, setIncluye] = useState({ servicio: true, materiales: true });
   const [editandoPrecio, setEditandoPrecio] = useState<RenglonInstalacion | null>(null);
@@ -64,11 +67,22 @@ export default function Resumen() {
     return { archivos, texto };
   }
 
+  /** Arranca la generacion al presionar, sin bloquear el gesto. */
+  function prepararEnvio() {
+    if (preparacionRef.current) return;
+    preparacionRef.current = construir().catch((e) => {
+      preparacionRef.current = null;
+      throw e;
+    });
+  }
+
   async function enviar() {
     if (enviando) return;
     setEnviando(true);
     try {
-      const { archivos, texto } = await construir();
+      // Ya resuelto en la practica: esperarlo es un microtask, asi que la
+      // activacion del gesto sigue vigente cuando se llame a compartir.
+      const { archivos, texto } = await (preparacionRef.current ?? construir());
       const resultado = await enviarPdfs(archivos, texto, (cot!.clienteSnapshot ?? cliente)?.telefono);
       setHoja(false);
       if (resultado === 'descargado') setAviso('Se descargaron los PDF y se abrio WhatsApp.');
@@ -77,6 +91,7 @@ export default function Resumen() {
       console.error(e);
       setAviso('No se pudo generar el PDF. Intenta de nuevo.');
     } finally {
+      preparacionRef.current = null;
       setEnviando(false);
     }
   }
@@ -396,12 +411,13 @@ export default function Resumen() {
               duracionMs={5000}
               cargando={enviando}
               disabled={!incluye.servicio && !incluye.materiales}
+              onEmpezar={prepararEnvio}
               onCompletar={() => void enviar()}
             />
           </div>
           <p className="mini" style={{ marginTop: 10, marginBottom: 0 }}>
-            Mantené presionado hasta que se llene para enviar. Si el teléfono no deja compartir
-            archivos, se descargan los PDF y se abre el chat para que los adjunte.
+            Mantené presionado hasta que se llene y soltá para enviar. Si el teléfono no deja
+            compartir archivos, se descargan los PDF y se abre el chat para que los adjunte.
           </p>
         </Hoja>
       )}
