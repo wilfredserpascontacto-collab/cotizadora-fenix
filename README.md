@@ -6,6 +6,9 @@ parada en el sitio del trabajo y sin señal.
 El criterio de éxito es uno solo: **que Francisco pueda cotizar y enviar el PDF
 por WhatsApp antes de irse de la propiedad del cliente.**
 
+> Si venís a retomar el proyecto, empezá por **[TRASPASO.md](TRASPASO.md)**: qué
+> se verificó, qué decisiones no son obvias, qué rompe si se toca y qué falta.
+
 ---
 
 ## El modelo de negocio, que define toda la app
