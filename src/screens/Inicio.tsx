@@ -116,11 +116,11 @@ export default function Inicio() {
           <Link className="btn" to="/catalogos">
             Catálogos
           </Link>
-          <Link className="btn" to="/ajustes">
+          {/* Sin boton de instalar: la pantalla sigue en /instalar para
+              acompaniar a un cliente nuevo la primera vez, pero no se ofrece
+              sola en Inicio. */}
+          <Link className="btn" to="/ajustes" style={{ gridColumn: '1 / -1' }}>
             Ajustes
-          </Link>
-          <Link className="btn" to="/instalar">
-            Instalar app
           </Link>
         </div>
 
