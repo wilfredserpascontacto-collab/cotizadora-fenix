@@ -15,8 +15,8 @@
   --acento-oscuro: #a3541a;
   --servicio: #0f766e;
   --servicio-suave: #ccfbf1;
-  --material: #7c3aed;
-  --material-suave: #ede9fe;
+  --material: #163a6b;
+  --material-suave: #dbe6f5;
   --peligro: #b91c1c;
   --peligro-suave: #fee2e2;
   --ok: #15803d;
@@ -257,7 +257,7 @@ p { margin: 0 0 10px; }
   margin-bottom: 12px;
 }
 .aviso.info { background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; }
-.aviso.material { background: var(--material-suave); border-color: #ddd6fe; color: #5b21b6; }
+.aviso.material { background: var(--material-suave); border-color: #b6cce8; color: #12305c; }
 .aviso.peligro { background: var(--peligro-suave); border-color: #fecaca; color: var(--peligro); }
 
 /* Resultados del buscador de materiales. */

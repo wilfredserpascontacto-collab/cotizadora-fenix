@@ -37,8 +37,8 @@ export function generarMaterialesPdf(
     'Esta lista NO es un cobro de ' +
       (perfil.nombre || 'Grupo Fénix') +
       '. Es el material que el cliente compra directamente en la distribuidora de su preferencia.',
-    [91, 33, 182],
-    [237, 233, 254],
+    [22, 58, 107],
+    [219, 230, 245],
   );
 
   autoTable(doc, {
@@ -47,8 +47,8 @@ export function generarMaterialesPdf(
     body: visibles.map((f) => [f.nombre, String(f.unidadesVenta), f.unidadVenta]),
     margin: { left: MARGEN, right: MARGEN, bottom: 60 },
     styles: { font: 'helvetica', fontSize: 9.5, cellPadding: 6, textColor: TINTA, lineColor: LINEA, lineWidth: 0.5 },
-    headStyles: { fillColor: [91, 33, 182], textColor: [255, 255, 255], fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [250, 250, 255] },
+    headStyles: { fillColor: [22, 58, 107], textColor: [255, 255, 255], fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [246, 249, 253] },
     columnStyles: {
       0: { cellWidth: 'auto' },
       1: { cellWidth: 52, halign: 'right' },
