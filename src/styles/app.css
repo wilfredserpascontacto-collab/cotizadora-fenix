@@ -258,6 +258,7 @@ p { margin: 0 0 10px; }
 }
 .aviso.info { background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; }
 .aviso.material { background: var(--material-suave); border-color: #ddd6fe; color: #5b21b6; }
+.aviso.peligro { background: var(--peligro-suave); border-color: #fecaca; color: var(--peligro); }
 
 .total-flotante { display: flex; justify-content: space-between; align-items: baseline; font-variant-numeric: tabular-nums; }
 .total-flotante .cifra { font-size: 24px; font-weight: 800; }

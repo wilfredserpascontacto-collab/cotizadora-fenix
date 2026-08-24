@@ -8,6 +8,7 @@ import { fmtMoney } from '../domain/money';
 import { IVA_BPS, type RenglonInstalacion } from '../domain/types';
 import { useCotizacion, useAviso } from '../state/useCotizacion';
 import { listaDeMateriales, useMateriales } from '../state/useMateriales';
+import { esFaltante } from '../domain/materiales';
 import { generarCotizacionPdf } from '../pdf/cotizacionPdf';
 import { generarMaterialesPdf } from '../pdf/materialesPdf';
 import { nombreArchivo } from '../pdf/comun';
@@ -44,6 +45,11 @@ export default function Resumen() {
   if (cargando || !cot || !filas || !catalogo || !perfil || !ajustes) {
     return cargando ? <Cargando /> : <Vacio titulo="Cotización no encontrada" />;
   }
+
+  // Los materiales faltantes no se pueden comprar: no cuentan en los conteos
+  // que ve Francisco ni salen en el PDF.
+  const comprables = filas.filter((f) => !esFaltante(f));
+  const faltantes = filas.filter(esFaltante);
 
   const totales = calcularTotales(cot);
   const tipoObra = ajustes.tiposObra.find((t) => t.id === cot.tipoObra);
@@ -153,6 +159,15 @@ export default function Resumen() {
       <main className="contenido con-pie">
         {aviso && <div className="aviso info">{aviso}</div>}
 
+        {faltantes.length > 0 && (
+          <div className="aviso peligro">
+            <strong>La lista de materiales está incompleta.</strong> Hay {faltantes.length} material
+            {faltantes.length === 1 ? '' : 'es'} que alguna partida pide y ya no están en el
+            catálogo, así que no salen en el PDF y el cliente compraría de menos. Revisalos en
+            Catálogos antes de enviar.
+          </div>
+        )}
+
         {/* Bloque 1: lo que cobra Francisco. */}
         <div className="tarjeta bloque-servicio">
           <span className="etiqueta servicio">Lo que cobra {perfil.nombre || 'Grupo Fénix'}</span>
@@ -252,7 +267,7 @@ export default function Resumen() {
           <span className="etiqueta material">Lo que compra el cliente</span>
           <h3 style={{ marginTop: 10 }}>Materiales en la distribuidora</h3>
           <p className="mini">
-            {filas.length} material{filas.length === 1 ? '' : 'es'}. No entra en el total de arriba.
+            {comprables.length} material{comprables.length === 1 ? '' : 'es'}. No entra en el total de arriba.
           </p>
           <button
             type="button"
@@ -416,7 +431,7 @@ export default function Resumen() {
             <span className="nombre">
               Lista de materiales
               <span className="mini" style={{ display: 'block', fontWeight: 400 }}>
-                {filas.length} materiales para la distribuidora
+                {comprables.length} materiales para la distribuidora
               </span>
             </span>
           </label>

@@ -6,7 +6,7 @@ import type {
   RenglonInstalacion,
 } from './types';
 
-export type FuenteRenglon = 'calculado' | 'ajustado' | 'manual';
+export type FuenteRenglon = 'calculado' | 'ajustado' | 'manual' | 'faltante';
 
 export interface RenglonMaterialCalculado {
   materialId: string;
@@ -26,6 +26,9 @@ export interface RenglonMaterialCalculado {
   /** Que partidas lo consumen. Sirve para explicar de donde sale la cantidad. */
   origenes: string[];
 }
+
+/** Las filas que no se pueden comprar porque el material ya no esta en el catalogo. */
+export const esFaltante = (f: RenglonMaterialCalculado) => f.fuente === 'faltante';
 
 /**
  * Recorre las partidas de la cotizacion, multiplica por las cantidades,
@@ -63,10 +66,30 @@ export function calcularMateriales(
   const filas: RenglonMaterialCalculado[] = [];
 
   for (const [materialId, { milli, origenes }] of acumulado) {
-    const material = porId.get(materialId);
-    if (!material) continue; // material borrado del catalogo: se ignora en silencio
     const ajuste = ajustePorId.get(materialId);
     if (ajuste?.eliminado) continue;
+
+    const material = porId.get(materialId);
+    if (!material) {
+      // Borrado del catalogo pero todavia pedido por una receta. Antes se
+      // ignoraba en silencio y el cliente terminaba comprando de menos, que es
+      // la peor forma de fallar de este producto: el trabajo se para a media
+      // instalacion y la culpa se la lleva la app. Ahora sale a la superficie.
+      filas.push({
+        materialId,
+        nombre: `Material eliminado del catálogo (${materialId})`,
+        unidadMedida: 'u',
+        unidadVenta: '—',
+        brutoMilli: milli,
+        conHolguraMilli: milli,
+        holguraPct: 0,
+        unidadesVenta: 0,
+        unidadesCalculadas: 0,
+        fuente: 'faltante',
+        origenes: [...origenes],
+      });
+      continue;
+    }
 
     const conHolguraMilli = Math.ceil((milli * (100 + material.holguraPct)) / 100);
     const contenido = Math.max(1, material.contenidoPorUnidadVentaMilli);

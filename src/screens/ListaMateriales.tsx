@@ -7,6 +7,7 @@ import {
   guardarCotizacion,
 } from '../db/repo';
 import { fmtMilli } from '../domain/money';
+import { esFaltante } from '../domain/materiales';
 import { useCotizacion } from '../state/useCotizacion';
 import { useMateriales } from '../state/useMateriales';
 import { Barra, Campo, Cargando, Contador, Hoja, Vacio } from '../components/ui';
@@ -22,6 +23,10 @@ export default function ListaMateriales() {
   if (cargando || !cot || !filas || !catalogo) return cargando ? <Cargando /> : <Vacio titulo="Cotización no encontrada" />;
 
   const extras = new Map(cot.materialesExtra.map((e) => [e.materialId ?? e.id, e]));
+  // Los faltantes no se pueden comprar: se muestran aparte, como advertencia,
+  // y no cuentan como material de la lista.
+  const faltantes = filas.filter(esFaltante);
+  const comprables = filas.filter((f) => !esFaltante(f));
 
   return (
     <>
@@ -42,14 +47,33 @@ export default function ListaMateriales() {
           distribuidora. Las cantidades ya traen desperdicio y están redondeadas a como se vende.
         </div>
 
-        {filas.length === 0 && (
+        {faltantes.length > 0 && (
+          <div className="aviso peligro">
+            <strong>
+              Falta{faltantes.length === 1 ? '' : 'n'} {faltantes.length} material
+              {faltantes.length === 1 ? '' : 'es'} en el catálogo.
+            </strong>{' '}
+            Alguna partida los pide pero ya no existen, así que <strong>no salen en la lista de
+            compra</strong> y el cliente compraría de menos. Revisalos en Catálogos antes de enviar.
+            <ul style={{ margin: '8px 0 0', paddingLeft: 18 }}>
+              {faltantes.map((f) => (
+                <li key={f.materialId} className="mini">
+                  {f.materialId}
+                  {f.origenes.length > 0 && <> — lo pide: {f.origenes.join(', ')}</>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {comprables.length === 0 && (
           <Vacio
             titulo="Todavia no hay materiales"
             detalle="Agregá partidas de instalación y la lista se arma sola."
           />
         )}
 
-        {filas.map((f) => {
+        {comprables.map((f) => {
           const extra = f.fuente === 'manual' ? extras.get(f.materialId) : undefined;
           return (
             <article key={f.materialId} className="renglon">
@@ -169,7 +193,7 @@ export default function ListaMateriales() {
         <div className="pie-inner">
           <div className="total-flotante">
             <span className="tenue">
-              {filas.length} material{filas.length === 1 ? '' : 'es'} a comprar
+              {comprables.length} material{comprables.length === 1 ? '' : 'es'} a comprar
               <span className="mini" style={{ display: 'block' }}>
                 no suma al total de Grupo Fénix
               </span>
