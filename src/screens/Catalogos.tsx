@@ -6,6 +6,7 @@ import { nuevoId } from '../domain/cotizacion';
 import { centsToInput, fmtMilli, fmtMoney, parseCents, parseMilli } from '../domain/money';
 import { CATEGORIAS, type Material, type Partida } from '../domain/types';
 import { Acordeon, Barra, Campo, Cargando, Hoja, Vacio } from '../components/ui';
+import { BuscadorMaterial } from '../components/BuscadorMaterial';
 
 type Pestania = 'partidas' | 'materiales' | 'recetas';
 
@@ -367,7 +368,6 @@ function EditorReceta({
   onCerrar: () => void;
 }) {
   const [receta, setReceta] = useState(partida.receta.map((l) => ({ ...l })));
-  const [nuevoMaterial, setNuevoMaterial] = useState('');
   const porId = new Map(materiales.map((m) => [m.id, m]));
 
   return (
@@ -405,24 +405,28 @@ function EditorReceta({
         );
       })}
 
-      <Campo etiqueta="Agregar material">
-        <select
-          value={nuevoMaterial}
-          onChange={(e) => {
-            const id = e.target.value;
-            setNuevoMaterial('');
-            if (id && !receta.some((l) => l.materialId === id)) {
+      <Campo
+        etiqueta="Agregar material"
+        ayuda="Escribí parte del nombre. No hace falta poner tildes."
+      >
+        <BuscadorMaterial
+          marcador="cable 12, caja termica…"
+          opciones={materiales.map((m) => {
+            const yaEsta = receta.some((l) => l.materialId === m.id);
+            return {
+              id: m.id,
+              nombre: m.nombre,
+              detalle: m.unidadVenta,
+              deshabilitado: yaEsta,
+              razon: yaEsta ? 'ya está en esta receta' : undefined,
+            };
+          })}
+          onElegir={(id) => {
+            if (!receta.some((l) => l.materialId === id)) {
               setReceta([...receta, { materialId: id, cantidadMilli: 1000 }]);
             }
           }}
-        >
-          <option value="">— Elegir —</option>
-          {materiales.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.nombre}
-            </option>
-          ))}
-        </select>
+        />
       </Campo>
 
       <button

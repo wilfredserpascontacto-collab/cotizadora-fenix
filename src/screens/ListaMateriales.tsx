@@ -11,6 +11,7 @@ import { esFaltante } from '../domain/materiales';
 import { useCotizacion } from '../state/useCotizacion';
 import { useMateriales } from '../state/useMateriales';
 import { Barra, Campo, Cargando, Contador, Hoja, Vacio } from '../components/ui';
+import { BuscadorMaterial } from '../components/BuscadorMaterial';
 
 export default function ListaMateriales() {
   const { id } = useParams();
@@ -262,33 +263,39 @@ function FormularioExtra({
 
   return (
     <>
-      <Campo etiqueta="Material del catálogo">
-        <select
-          value={materialId}
-          onChange={(e) => {
-            setMaterialId(e.target.value);
-            const m = catalogo.find((x) => x.id === e.target.value);
-            if (m) {
-              setUnidadVenta(m.unidadVenta);
-            }
-          }}
-        >
-          <option value="">— Otro material —</option>
-          {catalogo.map((m) => (
-            <option key={m.id} value={m.id} disabled={yaEnLista.has(m.id)}>
-              {m.nombre}
-              {yaEnLista.has(m.id) ? ' — ya está en la lista' : ''}
-            </option>
-          ))}
-        </select>
-      </Campo>
-      <p className="mini" style={{ marginTop: -4 }}>
-        Los que ya salen del cálculo aparecen apagados: para llevar más de esos, subí la cantidad
-        en su propia fila en vez de agregarlos otra vez.
-      </p>
-
-      {!delCatalogo && (
+      {delCatalogo ? (
+        <Campo etiqueta="Material del catálogo">
+          <div className="fila" style={{ alignItems: 'center', gap: 8 }}>
+            <span style={{ flex: 1, fontWeight: 600 }}>{delCatalogo.nombre}</span>
+            <button type="button" className="btn chico" onClick={() => setMaterialId('')}>
+              Cambiar
+            </button>
+          </div>
+        </Campo>
+      ) : (
         <>
+          <Campo
+            etiqueta="Buscar en el catálogo"
+            ayuda="Escribí parte del nombre. No hace falta poner tildes."
+          >
+            <BuscadorMaterial
+              marcador="cable 12, caja termica…"
+              opciones={catalogo.map((m) => ({
+                id: m.id,
+                nombre: m.nombre,
+                detalle: m.unidadVenta,
+                deshabilitado: yaEnLista.has(m.id),
+                razon: yaEnLista.has(m.id) ? 'ya sale del cálculo: subí la cantidad en su fila' : undefined,
+              }))}
+              onElegir={(id) => {
+                setMaterialId(id);
+                const m = catalogo.find((x) => x.id === id);
+                if (m) setUnidadVenta(m.unidadVenta);
+              }}
+            />
+          </Campo>
+
+          <p className="mini">O escribilo a mano si no está en el catálogo:</p>
           <Campo etiqueta="Nombre">
             <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Sellador para tubería" />
           </Campo>
