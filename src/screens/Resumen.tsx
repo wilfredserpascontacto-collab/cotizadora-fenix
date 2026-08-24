@@ -170,7 +170,7 @@ export default function Resumen() {
 
         {/* Bloque 1: lo que cobra Francisco. */}
         <div className="tarjeta bloque-servicio">
-          <span className="etiqueta servicio">Lo que cobra {perfil.nombre || 'Grupo Fénix'}</span>
+          <span className="etiqueta servicio">Lo que cobra {perfil.nombre || 'Grupo Phoenix'}</span>
           <h3 style={{ marginTop: 10 }}>Mano de obra e instalación</h3>
 
           <ul className="lista-limpia" style={{ margin: '10px 0' }}>

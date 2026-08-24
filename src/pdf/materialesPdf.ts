@@ -9,7 +9,7 @@ import { ANCHO, GRIS, LINEA, MARGEN, TINTA, bloqueCliente, caja, encabezado, pie
  * Lista de materiales para compra.
  * No es un cobro: es la instrucción de compra que el cliente lleva a la
  * distribuidora. Por eso no lleva IVA, no lleva total a pagar y nunca precios:
- * Grupo Fénix no maneja precios de materiales, ni siquiera de referencia.
+ * Grupo Phoenix no maneja precios de materiales, ni siquiera de referencia.
  */
 export function generarMaterialesPdf(
   cot: Cotizacion,
@@ -35,7 +35,7 @@ export function generarMaterialesPdf(
     doc,
     y,
     'Esta lista NO es un cobro de ' +
-      (perfil.nombre || 'Grupo Fénix') +
+      (perfil.nombre || 'Grupo Phoenix') +
       '. Es el material que el cliente compra directamente en la distribuidora de su preferencia.',
     [22, 58, 107],
     [219, 230, 245],
@@ -78,7 +78,7 @@ export function generarMaterialesPdf(
   doc.setTextColor(...GRIS);
   const cierre = doc.splitTextToSize(
     'Ante cualquier duda sobre calibres, medidas o equivalencias, consulte con ' +
-      (perfil.nombre || 'Grupo Fénix') +
+      (perfil.nombre || 'Grupo Phoenix') +
       (perfil.telefono ? ` al ${perfil.telefono}` : '') +
       ' antes de comprar.',
     ANCHO - MARGEN * 2,

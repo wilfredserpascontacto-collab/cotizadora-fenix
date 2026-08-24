@@ -211,7 +211,7 @@ export default function ListaMateriales() {
             <span className="tenue">
               {comprables.length} material{comprables.length === 1 ? '' : 'es'} a comprar
               <span className="mini" style={{ display: 'block' }}>
-                no suma al total de Grupo Fénix
+                no suma al total de Grupo Phoenix
               </span>
             </span>
           </div>

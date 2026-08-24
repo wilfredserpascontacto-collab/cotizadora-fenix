@@ -41,7 +41,7 @@ export default defineConfig(({ mode }) => {
         },
         manifest: {
           id: base,
-          name: 'Cotizadora Grupo Fenix',
+          name: 'Cotizadora Grupo Phoenix',
           short_name: 'Cotizadora',
           description: 'Cotizaciones de mano de obra electrica y listas de materiales, sin conexion.',
           start_url: base,

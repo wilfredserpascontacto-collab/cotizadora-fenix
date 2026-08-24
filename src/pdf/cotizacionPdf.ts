@@ -155,7 +155,7 @@ export function generarCotizacionPdf(
   doc.line(xFirmaCliente, y + 34, ANCHO - MARGEN, y + 34);
   doc.setFontSize(9);
   doc.setTextColor(...GRIS);
-  doc.text(perfil.nombre || 'Grupo Fénix', MARGEN, y + 48);
+  doc.text(perfil.nombre || 'Grupo Phoenix', MARGEN, y + 48);
   doc.text('Acepta el cliente', xFirmaCliente, y + 48);
 
   pies(doc, perfil);

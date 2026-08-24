@@ -100,7 +100,7 @@ export function textoResumen(
     `Buenas, ${nombre}. Le comparto la cotización ${formatearNumero(
       cot.numero,
       perfil.prefijoCorrelativo,
-    )} de ${perfil.nombre || 'Grupo Fénix'}.`,
+    )} de ${perfil.nombre || 'Grupo Phoenix'}.`,
     '',
     `Mano de obra e instalación: ${fmtMoney(totales.totalCents)} (${
       cot.aplicaIva !== false ? 'IVA incluido' : 'exento de IVA'

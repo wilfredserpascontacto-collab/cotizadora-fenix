@@ -40,7 +40,7 @@ export function encabezado(
   doc.setTextColor(...TINTA);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(17);
-  doc.text(perfil.nombre || 'Grupo Fénix', xTexto, y + 16);
+  doc.text(perfil.nombre || 'Grupo Phoenix', xTexto, y + 16);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
@@ -152,7 +152,7 @@ export function pies(doc: jsPDF, perfil: PerfilEmpresa) {
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...GRIS);
-    doc.text(perfil.nombre || 'Grupo Fénix', MARGEN, 770);
+    doc.text(perfil.nombre || 'Grupo Phoenix', MARGEN, 770);
     doc.text(`Página ${i} de ${total}`, ANCHO - MARGEN, 770, { align: 'right' });
   }
 }

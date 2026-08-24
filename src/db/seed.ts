@@ -483,9 +483,9 @@ export const PARTIDAS_SEED: Partida[] = [
 ];
 
 export const PERFIL_DEFAULT: PerfilEmpresa = {
-  nombre: 'Grupo Fénix S.A de C.V',
+  nombre: 'Grupo Phoenix',
   logoDataUrl: logoFenix,
-  telefono: '',
+  telefono: '7640-0423',
   correo: '',
   direccion: '',
   nit: '',
@@ -536,7 +536,7 @@ export const AJUSTES_DEFAULT: Ajustes = {
   clausulas: [
     {
       id: 'materiales-perdidos',
-      texto: 'Grupo Fénix no se hace responsable por materiales perdidos o dañados una vez entregados en el sitio.',
+      texto: 'Grupo Phoenix no se hace responsable por materiales perdidos o dañados una vez entregados en el sitio.',
       porDefecto: false,
     },
   ],
