@@ -27,6 +27,12 @@ export default function ListaMateriales() {
   // y no cuentan como material de la lista.
   const faltantes = filas.filter(esFaltante);
   const comprables = filas.filter((f) => !esFaltante(f));
+  // Materiales que el calculo ya trae. Agregarlos ademas como material suelto
+  // deja dos filas del mismo material en la lista de compra, y en la
+  // distribuidora eso se lee como dos productos distintos.
+  const yaCalculados = new Set(
+    filas.filter((f) => f.fuente === 'calculado' || f.fuente === 'ajustado').map((f) => f.materialId),
+  );
 
   return (
     <>
@@ -100,7 +106,16 @@ export default function ListaMateriales() {
                     {f.fuente === 'calculado' && <span className="etiqueta">Calculado</span>}
                     {f.fuente === 'ajustado' && <span className="etiqueta aviso">Ajustado a mano</span>}
                     {f.fuente === 'manual' && <span className="etiqueta material">Agregado a mano</span>}
+                    {f.fuente === 'manual' && yaCalculados.has(f.materialId) && (
+                      <span className="etiqueta peligro">Repetido</span>
+                    )}
                   </div>
+                  {f.fuente === 'manual' && yaCalculados.has(f.materialId) && (
+                    <div className="aviso peligro" style={{ marginTop: 8, marginBottom: 0 }}>
+                      Este material ya sale del cálculo más arriba, así que aparece dos veces en la
+                      lista de compra. Quitá esta fila y ajustá la cantidad en la otra.
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -209,6 +224,7 @@ export default function ListaMateriales() {
         <Hoja titulo="Material suelto" onCerrar={() => setAgregando(false)}>
           <FormularioExtra
             catalogo={catalogo}
+            yaEnLista={yaCalculados}
             onGuardar={async (datos) => {
               await agregarMaterialExtra(cot, datos);
               setAgregando(false);
@@ -222,9 +238,12 @@ export default function ListaMateriales() {
 
 function FormularioExtra({
   catalogo,
+  yaEnLista,
   onGuardar,
 }: {
   catalogo: { id: string; nombre: string; unidadVenta: string }[];
+  /** Materiales que el calculo ya trae: no se pueden volver a agregar. */
+  yaEnLista: Set<string>;
   onGuardar: (datos: {
     materialId?: string;
     nombre: string;
@@ -256,12 +275,17 @@ function FormularioExtra({
         >
           <option value="">— Otro material —</option>
           {catalogo.map((m) => (
-            <option key={m.id} value={m.id}>
+            <option key={m.id} value={m.id} disabled={yaEnLista.has(m.id)}>
               {m.nombre}
+              {yaEnLista.has(m.id) ? ' — ya está en la lista' : ''}
             </option>
           ))}
         </select>
       </Campo>
+      <p className="mini" style={{ marginTop: -4 }}>
+        Los que ya salen del cálculo aparecen apagados: para llevar más de esos, subí la cantidad
+        en su propia fila en vez de agregarlos otra vez.
+      </p>
 
       {!delCatalogo && (
         <>
