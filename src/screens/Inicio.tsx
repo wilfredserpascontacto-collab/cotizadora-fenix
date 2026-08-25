@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, leerBorradorActivo, leerPerfil } from '../db/db';
+import { db, leerPerfil } from '../db/db';
 import {
   ETIQUETA_ESTADO,
   calcularTotales,
@@ -21,14 +21,6 @@ export default function Inicio() {
   const navigate = useNavigate();
 
   const perfil = useLiveQuery(() => leerPerfil(), []);
-  const borrador = useLiveQuery(async () => {
-    const id = await leerBorradorActivo();
-    if (!id) return null;
-    const cot = await db.cotizaciones.get(id);
-    if (!cot || cot.numero !== null) return null;
-    const cliente = await db.clientes.get(cot.clienteId);
-    return { cot, cliente };
-  }, []);
 
   const conteos = useLiveQuery(async () => {
     const [partidas, cotizaciones, enviadas] = await Promise.all([
@@ -81,24 +73,6 @@ export default function Inicio() {
         subtitulo="Cotizar en el sitio y enviar antes de irse"
       />
       <main className="contenido">
-        {borrador && (
-          <div className="tarjeta bloque-servicio">
-            <span className="etiqueta aviso">Cotización sin terminar</span>
-            <h3 style={{ marginTop: 10 }}>{borrador.cliente?.nombre ?? 'Cliente sin nombre'}</h3>
-            <p className="mini">
-              {borrador.cot.renglones.length} partida
-              {borrador.cot.renglones.length === 1 ? '' : 's'} ·{' '}
-              {fmtMoney(calcularTotales(borrador.cot).totalCents)}
-            </p>
-            <button
-              type="button"
-              className="btn primario"
-              onClick={() => navigate(`/cot/${borrador.cot.id}`)}
-            >
-              Seguir donde la dejé
-            </button>
-          </div>
-        )}
 
         <div style={{ marginBottom: 14 }}>
           <BotonMantener
