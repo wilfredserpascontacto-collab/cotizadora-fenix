@@ -19,8 +19,15 @@ export interface TotalesCotizacion {
  * Solo mano de obra. El monto de materiales jamas se suma aqui.
  */
 export function calcularTotales(
-  cot: Pick<Cotizacion, 'renglones' | 'multiplicadorBps' | 'aplicaIva'>,
+  cot: Pick<Cotizacion, 'renglones' | 'multiplicadorBps' | 'aplicaIva' | 'modo' | 'totalCerradoCents'>,
 ): TotalesCotizacion {
+  if (cot.modo === 'compacta') {
+    const totalCents = cot.totalCerradoCents ?? 0;
+    const ivaCents = cot.aplicaIva === false ? 0 : Math.round((totalCents * IVA_BPS) / (10000 + IVA_BPS));
+    const subtotalCents = totalCents - ivaCents;
+    return { manoObraCents: subtotalCents, ajusteObraCents: 0, subtotalCents, ivaCents, totalCents };
+  }
+
   const manoObraCents = cot.renglones.reduce(
     (suma, r) => suma + subtotalRenglon(r),
     0,
