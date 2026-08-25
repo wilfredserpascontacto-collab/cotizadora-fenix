@@ -171,11 +171,12 @@ export default function Historial() {
                 type="button"
                 className="btn peligro"
                 onClick={async () => {
+                  if (!window.confirm('¿Desechar esta cotización sin terminar? Esta acción no se puede deshacer.')) return;
                   await eliminarBorrador(abierta);
                   setAbierta(null);
                 }}
               >
-                Eliminar borrador
+                Desechar cotización
               </button>
             ) : (
               <p className="mini">
