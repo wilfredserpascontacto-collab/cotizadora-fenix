@@ -20,7 +20,7 @@ export function generarCotizacionPdf(
   const c = cot.clienteSnapshot ?? cliente;
   const totales = calcularTotales(cot);
 
-  let y = encabezado(doc, perfil, cot, 'Cotización de servicio');
+  let y = encabezado(doc, perfil, cot, cot.modo === 'compacta' ? 'Cotización de precio cerrado' : 'Cotización de servicio');
   y = bloqueCliente(doc, y, cot, c?.nombre ?? 'Cliente', c?.telefono, c?.correo);
 
   if (cot.descripcionProyecto) {
@@ -36,7 +36,20 @@ export function generarCotizacionPdf(
     y += 14 + texto.length * 12 + 8;
   }
 
-  autoTable(doc, {
+  if (cot.modo === 'compacta') {
+    autoTable(doc, {
+      startY: y,
+      head: [['Alcances incluidos']],
+      body: (cot.alcances ?? []).map((alcance) => [alcance]),
+      margin: { left: MARGEN, right: MARGEN, bottom: 60 },
+      styles: { font: 'helvetica', fontSize: 10, cellPadding: 7, textColor: TINTA, lineColor: LINEA, lineWidth: 0.5 },
+      headStyles: { fillColor: TINTA, textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      showHead: 'everyPage',
+      rowPageBreak: 'avoid',
+    });
+  } else {
+    autoTable(doc, {
     startY: y,
     head: [['Descripción', 'Cant.', 'Unidad', 'P. unitario', 'Subtotal']],
     body: cot.renglones.map((r) => [
@@ -61,6 +74,7 @@ export function generarCotizacionPdf(
     showHead: 'everyPage',
     rowPageBreak: 'avoid',
   });
+  }
 
   y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 16;
   y = espacioSuficiente(doc, y, 170, perfil, cot);
@@ -78,11 +92,11 @@ export function generarCotizacionPdf(
     y += fuerte ? 20 : 15;
   };
 
-  linea('Mano de obra', fmtMoney(totales.manoObraCents));
+  linea(cot.modo === 'compacta' ? 'Precio cerrado' : 'Mano de obra', fmtMoney(totales.manoObraCents));
   if (totales.ajusteObraCents !== 0) {
     linea(`Ajuste por ${tipoObraNombre.toLowerCase()}`, fmtMoney(totales.ajusteObraCents));
   }
-  linea('Subtotal', fmtMoney(totales.subtotalCents));
+  linea(cot.modo === 'compacta' ? 'Base del precio cerrado' : 'Subtotal', fmtMoney(totales.subtotalCents));
   linea(cot.aplicaIva !== false ? 'IVA 13%' : 'IVA (cliente exento)', fmtMoney(totales.ivaCents));
 
   doc.setDrawColor(...TINTA);
@@ -172,5 +186,5 @@ function espacioSuficiente(
 ): number {
   if (y + alto < 750) return y;
   doc.addPage();
-  return encabezado(doc, perfil, cot, 'Cotización de servicio', 'continuación');
+  return encabezado(doc, perfil, cot, cot.modo === 'compacta' ? 'Cotización de precio cerrado' : 'Cotización de servicio', 'continuación');
 }
