@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   db,
@@ -388,6 +389,17 @@ export default function Ajustes() {
               onChange={(e) => set({ cuentaBancaria: { ...perfil.cuentaBancaria, titular: e.target.value } })}
             />
           </Campo>
+        </div>
+
+        <div className="tarjeta">
+          <h3>Instalar en otro teléfono</h3>
+          <p className="mini" style={{ marginBottom: 12 }}>
+            Si cambiás de equipo, acá están los pasos. Acordate de exportar el respaldo antes y de
+            importarlo en el teléfono nuevo: la información no viaja sola.
+          </p>
+          <Link className="btn" to="/instalar" style={{ display: 'block', textAlign: 'center' }}>
+            Cómo instalar la app
+          </Link>
         </div>
 
         <div className="tarjeta">
