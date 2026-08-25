@@ -13,9 +13,12 @@ import Historial from './screens/Historial';
 import Catalogos from './screens/Catalogos';
 import Ajustes from './screens/Ajustes';
 import ComoInstalar from './screens/ComoInstalar';
+import Ayuda from './screens/Ayuda';
+
 
 export default function App() {
   const [listo, setListo] = useState(false);
+
 
   useEffect(() => {
     sembrarSiHaceFalta()
@@ -23,7 +26,9 @@ export default function App() {
       .finally(() => setListo(true));
   }, []);
 
+
   if (!listo) return <Cargando />;
+
 
   return (
     <div className="app">
@@ -34,14 +39,3 @@ export default function App() {
         <Route path="/cot/:id" element={<ArmarCotizacion />} />
         <Route path="/cot/:id/materiales" element={<ListaMateriales />} />
         <Route path="/cot/:id/vista-previa" element={<VistaPrevia />} />
-        <Route path="/cot/:id/firma" element={<Firma />} />
-        <Route path="/cot/:id/resumen" element={<Resumen />} />
-        <Route path="/historial" element={<Historial />} />
-        <Route path="/catalogos" element={<Catalogos />} />
-        <Route path="/ajustes" element={<Ajustes />} />
-        <Route path="/instalar" element={<ComoInstalar />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </div>
-  );
-}
