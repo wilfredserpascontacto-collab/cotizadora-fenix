@@ -167,6 +167,8 @@ export interface MaterialExtra {
   unidadesVenta: number;
 }
 
+export type ModoCotizacion = 'detallada' | 'compacta';
+
 export type EstadoCotizacion = 'borrador' | 'enviada' | 'aceptada' | 'rechazada' | 'vencida';
 
 export interface Cotizacion {
@@ -180,6 +182,11 @@ export interface Cotizacion {
   clienteSnapshot?: Cliente;
   ubicacion: string;
   descripcionProyecto?: string;
+  /** Detallada usa catálogo y recetas; compacta describe alcances con un precio cerrado. */
+  modo?: ModoCotizacion;
+  alcances?: string[];
+  /** Total final del proyecto para una cotización compacta, ya con IVA si aplica. */
+  totalCerradoCents?: Cents;
   renglones: RenglonInstalacion[];
   tipoObra: TipoObra;
   multiplicadorBps: Bps;
