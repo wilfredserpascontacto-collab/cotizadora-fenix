@@ -8,6 +8,7 @@ import type {
   Partida,
   RenglonInstalacion,
   TipoObra,
+  ModoCotizacion,
 } from '../domain/types';
 
 // ---------------------------------------------------------------------------
@@ -31,6 +32,7 @@ export async function crearCotizacion(datos: {
   ubicacion: string;
   tipoObra: TipoObra;
   descripcionProyecto?: string;
+  modo?: ModoCotizacion;
 }): Promise<Cotizacion> {
   const [perfil, ajustes] = await Promise.all([leerPerfil(), leerAjustes()]);
   const tipo = ajustes.tiposObra.find((t) => t.id === datos.tipoObra) ?? ajustes.tiposObra[0];
@@ -44,6 +46,9 @@ export async function crearCotizacion(datos: {
     clienteId: datos.clienteId,
     ubicacion: datos.ubicacion,
     descripcionProyecto: datos.descripcionProyecto,
+    modo: datos.modo ?? 'detallada',
+    alcances: datos.modo === 'compacta' ? [] : undefined,
+    totalCerradoCents: datos.modo === 'compacta' ? 0 : undefined,
     renglones: [],
     tipoObra: tipo.id,
     multiplicadorBps: tipo.multiplicadorBps,
