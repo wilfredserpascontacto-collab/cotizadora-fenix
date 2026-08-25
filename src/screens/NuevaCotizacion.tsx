@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, leerAjustes } from '../db/db';
 import { crearCliente, crearCotizacion } from '../db/repo';
-import type { TipoObra } from '../domain/types';
+import type { ModoCotizacion, TipoObra } from '../domain/types';
 import { Barra, Campo } from '../components/ui';
 
 export default function NuevaCotizacion() {
@@ -18,6 +18,7 @@ export default function NuevaCotizacion() {
   const [ubicacion, setUbicacion] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [tipoObra, setTipoObra] = useState<TipoObra>('nueva');
+  const [modo, setModo] = useState<ModoCotizacion>('detallada');
   const [guardando, setGuardando] = useState(false);
 
   const creandoCliente = clienteId === '';
@@ -43,8 +44,9 @@ export default function NuevaCotizacion() {
         ubicacion: ubicacion.trim(),
         tipoObra,
         descripcionProyecto: descripcion.trim() || undefined,
+        modo,
       });
-      navigate(`/cot/${cot.id}`, { replace: true });
+      navigate(modo === 'compacta' ? '/cot/' + cot.id + '/compacta' : '/cot/' + cot.id, { replace: true });
     } finally {
       setGuardando(false);
     }
@@ -119,7 +121,20 @@ export default function NuevaCotizacion() {
           </Campo>
         </div>
 
+
         <div className="tarjeta">
+          <h3>Tipo de cotización</h3>
+          <div className="columna">
+            <button type="button" className="item-catalogo" style={modo === 'compacta' ? { borderColor: 'var(--acento)', background: '#fffbeb' } : undefined} onClick={() => setModo('compacta')}>
+              <span className="nombre">Precio cerrado<span className="mini" style={{ display: 'block', fontWeight: 400 }}>Describe los alcances y muestra un único total. Sin materiales.</span></span>
+            </button>
+            <button type="button" className="item-catalogo" style={modo === 'detallada' ? { borderColor: 'var(--acento)', background: '#fffbeb' } : undefined} onClick={() => setModo('detallada')}>
+              <span className="nombre">Mano de obra + materiales<span className="mini" style={{ display: 'block', fontWeight: 400 }}>Usa catálogo, recetas y lista de compra.</span></span>
+            </button>
+          </div>
+        </div>
+
+        {modo === 'detallada' && <div className="tarjeta">
           <h3>Tipo de obra</h3>
           <p className="mini" style={{ marginBottom: 10 }}>
             Ajusta la mano de obra. No cambia las cantidades de material.
@@ -150,7 +165,7 @@ export default function NuevaCotizacion() {
               );
             })}
           </div>
-        </div>
+        </div>}
       </main>
 
       <div className="pie">
