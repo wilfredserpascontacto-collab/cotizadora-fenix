@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { calcularTotales } from '../domain/cotizacion';
+import type { Cotizacion } from '../domain/types';
 import { fmtMoney } from '../domain/money';
 import { guardarCotizacion } from '../db/repo';
 import { useCotizacion } from '../state/useCotizacion';
@@ -26,7 +27,7 @@ export default function CotizacionCompacta() {
     if (!limpios.length || cents <= 0 || guardando) return;
     setGuardando(true);
     try {
-      await guardarCotizacion({ ...cot, id: id!, modo: 'compacta', alcances: limpios, totalCerradoCents: cents, renglones: [] });
+      await guardarCotizacion({ ...cot, id: id!, modo: 'compacta', alcances: limpios, totalCerradoCents: cents, renglones: [] } as Cotizacion);
       navigate('/cot/' + id + '/vista-previa');
     } finally {
       setGuardando(false);
