@@ -15,7 +15,7 @@ export default function CotizacionCompacta() {
   const [guardando, setGuardando] = useState(false);
 
   if (cargando) return <Cargando />;
-  if (!cot) return <Vacio titulo="Cotización no encontrada" />;
+  if (!cot || !id) return <Vacio titulo="Cotización no encontrada" />;
   const lista = alcances ?? cot.alcances ?? [];
   const valor = total ?? ((cot.totalCerradoCents ?? 0) / 100).toFixed(2);
   const totales = calcularTotales({ ...cot, modo: 'compacta', totalCerradoCents: Math.round((Number(valor) || 0) * 100) });
@@ -26,8 +26,8 @@ export default function CotizacionCompacta() {
     if (!limpios.length || cents <= 0 || guardando) return;
     setGuardando(true);
     try {
-      await guardarCotizacion({ ...cot, modo: 'compacta', alcances: limpios, totalCerradoCents: cents, renglones: [] });
-      navigate('/cot/' + cot.id + '/vista-previa');
+      await guardarCotizacion({ ...cot, id, modo: 'compacta', alcances: limpios, totalCerradoCents: cents, renglones: [] });
+      navigate('/cot/' + id + '/vista-previa');
     } finally {
       setGuardando(false);
     }
