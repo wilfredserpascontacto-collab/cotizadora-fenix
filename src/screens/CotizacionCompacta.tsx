@@ -26,7 +26,7 @@ export default function CotizacionCompacta() {
     if (!limpios.length || cents <= 0 || guardando) return;
     setGuardando(true);
     try {
-      await guardarCotizacion({ ...cot, id, modo: 'compacta', alcances: limpios, totalCerradoCents: cents, renglones: [] });
+      await guardarCotizacion({ ...cot, id: id!, modo: 'compacta', alcances: limpios, totalCerradoCents: cents, renglones: [] });
       navigate('/cot/' + id + '/vista-previa');
     } finally {
       setGuardando(false);
