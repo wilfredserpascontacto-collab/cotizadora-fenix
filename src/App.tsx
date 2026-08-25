@@ -14,6 +14,7 @@ import Catalogos from './screens/Catalogos';
 import Ajustes from './screens/Ajustes';
 import ComoInstalar from './screens/ComoInstalar';
 import Ayuda from './screens/Ayuda';
+import CotizacionCompacta from './screens/CotizacionCompacta';
 
 export default function App() {
   const [listo, setListo] = useState(false);
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/" element={<Inicio />} />
         <Route path="/nueva" element={<NuevaCotizacion />} />
         <Route path="/cot/:id" element={<ArmarCotizacion />} />
+        <Route path="/cot/:id/compacta" element={<CotizacionCompacta />} />
         <Route path="/cot/:id/materiales" element={<ListaMateriales />} />
         <Route path="/cot/:id/vista-previa" element={<VistaPrevia />} />
         <Route path="/cot/:id/firma" element={<Firma />} />
