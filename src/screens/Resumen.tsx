@@ -397,7 +397,12 @@ export default function Resumen() {
           <button
             type="button"
             className="btn primario"
-            disabled={cot.renglones.length === 0 || enviando}
+            disabled={
+              enviando ||
+              (cot.modo === 'compacta'
+                ? !(cot.totalCerradoCents && cot.totalCerradoCents > 0)
+                : cot.renglones.length === 0)
+            }
             onClick={() => setHoja(true)}
           >
             {enviando ? 'Generando…' : 'Generar y enviar'}
