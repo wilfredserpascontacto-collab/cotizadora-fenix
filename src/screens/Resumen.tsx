@@ -12,7 +12,7 @@ import { esFaltante } from '../domain/materiales';
 import { generarCotizacionPdf } from '../pdf/cotizacionPdf';
 import { generarMaterialesPdf } from '../pdf/materialesPdf';
 import { nombreArchivo } from '../pdf/comun';
-import { abrirPdf, enviarPdfs, textoResumen, type ArchivoPdf } from '../share/enviar';
+import { abrirPdf, descargar, enviarPdfs, textoResumen, type ArchivoPdf } from '../share/enviar';
 import { Barra, Campo, Cargando, Hoja, Vacio } from '../components/ui';
 import { EditorPrecio } from '../components/EditorPrecio';
 
@@ -118,6 +118,26 @@ export default function Resumen() {
         console.error(e);
         setAviso('No se pudo compartir. Intenta de nuevo.');
       });
+  }
+
+  /**
+   * Guarda los PDF en el teléfono sin mandarlos a nadie.
+   *
+   * La función ya existía, pero solo como plan B cuando compartir fallaba. Hay
+   * quien prefiere tener los archivos guardados y mandarlos después, cuando le
+   * quede cómodo, y para eso tenía que pasar primero por la hoja de WhatsApp.
+   * Descargar no pide el gesto fresco que exige compartir, pero se llama igual
+   * desde el toque para que ningún navegador lo tome por una descarga
+   * que la persona no pidió.
+   */
+  function guardarEnTelefono() {
+    if (!listos) return;
+    for (const a of listos.archivos) descargar(a);
+    setAviso(
+      listos.archivos.length === 1
+        ? `Guardado: ${listos.archivos[0].nombre}`
+        : `Guardados: ${listos.archivos.map((a) => a.nombre).join(' y ')}`,
+    );
   }
 
   /** Cambiar que se manda invalida lo ya generado. */
@@ -405,13 +425,13 @@ export default function Resumen() {
             }
             onClick={() => setHoja(true)}
           >
-            {enviando ? 'Generando…' : 'Generar y enviar'}
+            {enviando ? 'Generando…' : 'Generar PDF'}
           </button>
         </div>
       </div>
 
       {hoja && (
-        <Hoja titulo="Qué le mando al cliente" onCerrar={() => setHoja(false)}>
+        <Hoja titulo="Qué va en los PDF" onCerrar={() => setHoja(false)}>
           <label className="item-catalogo" style={{ cursor: 'pointer' }}>
             <input
               type="checkbox"
@@ -463,8 +483,9 @@ export default function Resumen() {
                 </button>
               </div>
               <p className="mini" style={{ marginTop: 10, marginBottom: 0 }}>
-                Primero se arman los archivos; después los mandás. Son dos toques porque el
-                navegador sólo deja compartir en el momento justo en que tocás.
+                Primero se arman los archivos; después elegís si los guardás en el teléfono o
+                los mandás por WhatsApp. Son dos toques porque el navegador sólo deja compartir
+                en el momento justo en que tocás.
               </p>
             </>
           ) : (
@@ -472,7 +493,15 @@ export default function Resumen() {
               <p className="mini" style={{ marginTop: 12, marginBottom: 0 }}>
                 {listos.archivos.length === 1 ? 'Archivo listo' : `${listos.archivos.length} archivos listos`}.
               </p>
-              <div style={{ marginTop: 8 }}>
+              <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn"
+                  style={{ width: '100%' }}
+                  onClick={guardarEnTelefono}
+                >
+                  {listos.archivos.length === 1 ? 'Guardar en el teléfono' : 'Guardar los PDF en el teléfono'}
+                </button>
                 {/* Sin nada en medio: navigator.share sale del propio toque. */}
                 <button
                   type="button"
@@ -483,6 +512,11 @@ export default function Resumen() {
                   Enviar por WhatsApp
                 </button>
               </div>
+              <p className="mini" style={{ marginTop: 8, marginBottom: 0 }}>
+                Guardados quedan en Descargas, con el número y el nombre del cliente, para
+                mandarlos cuando quieras. La cotización también queda en el historial: desde ahí
+                se vuelven a generar iguales y con el mismo número.
+              </p>
 
               {respaldo && (
                 <div className="aviso info" style={{ marginTop: 12 }}>

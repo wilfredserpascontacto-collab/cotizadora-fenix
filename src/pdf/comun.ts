@@ -157,7 +157,23 @@ export function pies(doc: jsPDF, perfil: PerfilEmpresa) {
   }
 }
 
+/**
+ * «COT-0007-cotizacion-Juan-Perez.pdf».
+ *
+ * El nombre del cliente va en el archivo porque los PDF ahora se pueden
+ * guardar en el teléfono y mandar días después. En una carpeta de Descargas con
+ * veinte archivos, «COT-0007-cotizacion.pdf» obliga a abrirlos uno por uno para
+ * saber cuál es de quién. Se le quitan tildes y signos para que ningún teléfono
+ * ni WhatsApp lo cambie por símbolos raros, y se corta a un largo razonable.
+ */
 export function nombreArchivo(cot: Cotizacion, perfil: PerfilEmpresa, sufijo: string): string {
   const num = formatearNumero(cot.numero, perfil.prefijoCorrelativo).replace(/[^\w-]/g, '');
-  return `${num}-${sufijo}.pdf`;
+  const cliente = (cot.clienteSnapshot?.nombre ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40)
+    .replace(/-+$/, '');
+  return cliente ? `${num}-${sufijo}-${cliente}.pdf` : `${num}-${sufijo}.pdf`;
 }
