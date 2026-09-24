@@ -79,6 +79,31 @@ export const leerAjustes = async (): Promise<Ajustes> => ({
 });
 export const guardarAjustes = (a: Ajustes) => escribirMeta(META.ajustes, a);
 
+/**
+ * Cambia unos campos del perfil sin tocar los demas.
+ *
+ * Lee lo guardado justo antes de escribir, en vez de partir de la copia que
+ * la pantalla tenia pintada. La diferencia importa desde que los campos de
+ * texto se guardan con un respiro: si alguien corrige el telefono y salta al
+ * correo en el mismo segundo, las dos escrituras salen casi juntas, y la
+ * segunda, armada sobre una foto vieja del perfil, borraria el telefono
+ * recien escrito. Partiendo siempre de lo que hay en la base, no se pisan.
+ */
+export async function actualizarPerfil(
+  cambios: Partial<PerfilEmpresa> | ((actual: PerfilEmpresa) => Partial<PerfilEmpresa>),
+): Promise<void> {
+  const actual = await leerPerfil();
+  await guardarPerfil({ ...actual, ...(typeof cambios === 'function' ? cambios(actual) : cambios) });
+}
+
+/** Igual que actualizarPerfil, para los ajustes. */
+export async function actualizarAjustes(
+  cambios: Partial<Ajustes> | ((actual: Ajustes) => Partial<Ajustes>),
+): Promise<void> {
+  const actual = await leerAjustes();
+  await guardarAjustes({ ...actual, ...(typeof cambios === 'function' ? cambios(actual) : cambios) });
+}
+
 // ---------------------------------------------------------------------------
 // Correlativo
 

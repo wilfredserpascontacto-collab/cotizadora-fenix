@@ -10,7 +10,9 @@
     "verificar": "esbuild scripts/verificar-calculo.ts --bundle --loader:.png=dataurl --platform=node --format=esm --outfile=node_modules/.cache/verificar.mjs --log-level=error && node node_modules/.cache/verificar.mjs",
     "verificar:pdf": "esbuild scripts/verificar-pdf.ts --bundle --loader:.png=dataurl --platform=node --format=esm --outfile=node_modules/.cache/verificar-pdf.mjs --log-level=error && node node_modules/.cache/verificar-pdf.mjs",
     "typecheck": "tsc -b",
-    "iconos": "powershell -ExecutionPolicy Bypass -File scripts/logo-a-iconos.ps1"
+    "iconos": "powershell -ExecutionPolicy Bypass -File scripts/logo-a-iconos.ps1",
+    "verificar:pdf-feo": "esbuild scripts/torturar-pdf.ts --bundle --loader:.png=dataurl --platform=node --format=esm --outfile=node_modules/.cache/torturar.mjs --log-level=error && node node_modules/.cache/torturar.mjs",
+    "verificar:pantallas": "node scripts/verificar-pantallas.mjs"
   },
   "dependencies": {
     "dexie": "^4.0.11",

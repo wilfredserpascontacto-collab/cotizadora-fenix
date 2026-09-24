@@ -2,17 +2,18 @@ import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
+  actualizarAjustes,
+  actualizarPerfil,
   db,
   exportarRespaldo,
-  guardarAjustes,
-  guardarPerfil,
   importarRespaldo,
   leerAjustes,
   leerPerfil,
 } from '../db/db';
-import type { Ajustes as AjustesTipo, PerfilEmpresa } from '../domain/types';
+import type { Ajustes as AjustesTipo, CuentaBancaria, PerfilEmpresa } from '../domain/types';
 import { useAviso } from '../state/useCotizacion';
 import { Barra, Campo, Cargando } from '../components/ui';
+import { AreaTexto, CampoNumero, CampoTexto } from '../components/campos';
 
 export default function Ajustes() {
   const perfil = useLiveQuery(() => leerPerfil(), []);
@@ -22,8 +23,14 @@ export default function Ajustes() {
 
   if (!perfil || !ajustes) return <Cargando />;
 
-  const set = (cambios: Partial<PerfilEmpresa>) => void guardarPerfil({ ...perfil, ...cambios });
-  const setAj = (cambios: Partial<AjustesTipo>) => void guardarAjustes({ ...ajustes, ...cambios });
+  const set = (cambios: Partial<PerfilEmpresa>) => void actualizarPerfil(cambios);
+  const setAj = (
+    cambios: Partial<AjustesTipo> | ((actual: AjustesTipo) => Partial<AjustesTipo>),
+  ) => void actualizarAjustes(cambios);
+  // La cuenta bancaria vive anidada: hay que rearmarla sobre lo que este
+  // guardado, no sobre la copia pintada, o cambiar el banco borra el titular.
+  const setBanco = (cambios: Partial<CuentaBancaria>) =>
+    void actualizarPerfil((p) => ({ cuentaBancaria: { ...p.cuentaBancaria, ...cambios } }));
 
   async function cargarLogo(archivo: File) {
     try {
@@ -117,25 +124,25 @@ export default function Ajustes() {
           </div>
 
           <Campo etiqueta="Nombre">
-            <input value={perfil.nombre} onChange={(e) => set({ nombre: e.target.value })} />
+            <CampoTexto valor={perfil.nombre} guardar={(v) => set({ nombre: v })} />
           </Campo>
           <div className="grid-2">
             <Campo etiqueta="Teléfono">
-              <input value={perfil.telefono} inputMode="tel" onChange={(e) => set({ telefono: e.target.value })} />
+              <CampoTexto valor={perfil.telefono} inputMode="tel" guardar={(v) => set({ telefono: v })} />
             </Campo>
             <Campo etiqueta="Correo">
-              <input value={perfil.correo ?? ''} inputMode="email" onChange={(e) => set({ correo: e.target.value })} />
+              <CampoTexto valor={perfil.correo ?? ''} inputMode="email" guardar={(v) => set({ correo: v })} />
             </Campo>
           </div>
           <Campo etiqueta="Dirección">
-            <input value={perfil.direccion ?? ''} onChange={(e) => set({ direccion: e.target.value })} />
+            <CampoTexto valor={perfil.direccion ?? ''} guardar={(v) => set({ direccion: v })} />
           </Campo>
           <div className="grid-2">
             <Campo etiqueta="NIT">
-              <input value={perfil.nit ?? ''} onChange={(e) => set({ nit: e.target.value })} />
+              <CampoTexto valor={perfil.nit ?? ''} guardar={(v) => set({ nit: v })} />
             </Campo>
             <Campo etiqueta="NRC">
-              <input value={perfil.nrc ?? ''} onChange={(e) => set({ nrc: e.target.value })} />
+              <CampoTexto valor={perfil.nrc ?? ''} guardar={(v) => set({ nrc: v })} />
             </Campo>
           </div>
         </div>
@@ -143,31 +150,30 @@ export default function Ajustes() {
         <div className="tarjeta">
           <h3>Condiciones por defecto</h3>
           <Campo etiqueta="Condiciones" ayuda="Una por linea. Se copian a cada cotización nueva.">
-            <textarea
+            <AreaTexto
               rows={5}
-              value={perfil.condicionesPorDefecto}
-              onChange={(e) => set({ condicionesPorDefecto: e.target.value })}
+              valor={perfil.condicionesPorDefecto}
+              guardar={(v) => set({ condicionesPorDefecto: v })}
             />
           </Campo>
           <Campo etiqueta="Garantía del trabajo">
-            <textarea rows={2} value={perfil.garantia} onChange={(e) => set({ garantia: e.target.value })} />
+            <AreaTexto rows={2} valor={perfil.garantia} guardar={(v) => set({ garantia: v })} />
           </Campo>
           <Campo etiqueta="Días de validez">
-            <input
-              type="number"
-              inputMode="numeric"
+            <CampoNumero
               min={1}
-              value={perfil.diasValidezPorDefecto}
-              onChange={(e) => set({ diasValidezPorDefecto: Math.max(1, Number(e.target.value) || 1) })}
+              minimo={1}
+              valor={perfil.diasValidezPorDefecto}
+              guardar={(v) => set({ diasValidezPorDefecto: v })}
             />
           </Campo>
           <Campo
             etiqueta="Prefijo del correlativo"
             ayuda="Si algún dia hay un segundo teléfono, cambiale el prefijo para que los números no choquen."
           >
-            <input
-              value={perfil.prefijoCorrelativo}
-              onChange={(e) => set({ prefijoCorrelativo: e.target.value })}
+            <CampoTexto
+              valor={perfil.prefijoCorrelativo}
+              guardar={(v) => set({ prefijoCorrelativo: v })}
             />
           </Campo>
         </div>
@@ -180,28 +186,22 @@ export default function Ajustes() {
           </p>
           <div className="grid-2">
             <Campo etiqueta="Cable %">
-              <input
-                type="number"
-                inputMode="numeric"
-                value={ajustes.holguraCablePct}
-                onChange={(e) => setAj({ holguraCablePct: Number(e.target.value) || 0 })}
+              <CampoNumero
+                valor={ajustes.holguraCablePct}
+                guardar={(v) => setAj({ holguraCablePct: v })}
               />
             </Campo>
             <Campo etiqueta="Tubería %">
-              <input
-                type="number"
-                inputMode="numeric"
-                value={ajustes.holguraTuberiaPct}
-                onChange={(e) => setAj({ holguraTuberiaPct: Number(e.target.value) || 0 })}
+              <CampoNumero
+                valor={ajustes.holguraTuberiaPct}
+                guardar={(v) => setAj({ holguraTuberiaPct: v })}
               />
             </Campo>
           </div>
           <Campo etiqueta="Resto de materiales %">
-            <input
-              type="number"
-              inputMode="numeric"
-              value={ajustes.holguraGeneralPct}
-              onChange={(e) => setAj({ holguraGeneralPct: Number(e.target.value) || 0 })}
+            <CampoNumero
+              valor={ajustes.holguraGeneralPct}
+              guardar={(v) => setAj({ holguraGeneralPct: v })}
             />
           </Campo>
           <button
@@ -235,18 +235,17 @@ export default function Ajustes() {
           <p className="mini" style={{ marginBottom: 12 }}>
             Multiplica la mano de obra. Nunca cambia las cantidades de material.
           </p>
-          {ajustes.tiposObra.map((t, i) => (
+          {ajustes.tiposObra.map((t) => (
             <Campo key={t.id} etiqueta={`${t.nombre} (%)`} ayuda={t.descripcion}>
-              <input
-                type="number"
-                inputMode="numeric"
-                value={Math.round(t.multiplicadorBps / 100 - 100)}
-                onChange={(e) => {
-                  const pct = Number(e.target.value) || 0;
-                  const tipos = [...ajustes.tiposObra];
-                  tipos[i] = { ...t, multiplicadorBps: 10000 + Math.round(pct * 100) };
-                  setAj({ tiposObra: tipos });
-                }}
+              <CampoNumero
+                valor={Math.round(t.multiplicadorBps / 100 - 100)}
+                guardar={(pct) =>
+                  setAj((a) => ({
+                    tiposObra: a.tiposObra.map((x) =>
+                      x.id === t.id ? { ...x, multiplicadorBps: 10000 + Math.round(pct * 100) } : x,
+                    ),
+                  }))
+                }
               />
             </Campo>
           ))}
@@ -257,7 +256,7 @@ export default function Ajustes() {
           <p className="mini" style={{ marginBottom: 12 }}>
             Los porcentajes de cada cuota. Se eligen por cotización en la revisión final.
           </p>
-          {ajustes.formasPago.map((f, i) => (
+          {ajustes.formasPago.map((f) => (
             <div key={f.id} style={{ marginBottom: 14 }}>
               <label className="fila" style={{ marginBottom: 8, cursor: 'pointer' }}>
                 <input
@@ -274,20 +273,24 @@ export default function Ajustes() {
                 <div className="grid-2">
                   {f.cuotas.map((c, j) => (
                     <Campo key={c.etiqueta} etiqueta={`${c.etiqueta} %`}>
-                      <input
-                        type="number"
-                        inputMode="numeric"
+                      <CampoNumero
                         min={0}
                         max={100}
-                        value={c.pct}
-                        onChange={(e) => {
-                          const pct = Math.min(100, Math.max(0, Number(e.target.value) || 0));
-                          const formasPago = [...ajustes.formasPago];
-                          const cuotas = [...f.cuotas];
-                          cuotas[j] = { ...c, pct };
-                          formasPago[i] = { ...f, cuotas };
-                          setAj({ formasPago });
-                        }}
+                        minimo={0}
+                        maximo={100}
+                        valor={c.pct}
+                        guardar={(pct) =>
+                          setAj((a) => ({
+                            formasPago: a.formasPago.map((fx) =>
+                              fx.id === f.id
+                                ? {
+                                    ...fx,
+                                    cuotas: fx.cuotas.map((cx, k) => (k === j ? { ...cx, pct } : cx)),
+                                  }
+                                : fx,
+                            ),
+                          }))
+                        }
                       />
                     </Campo>
                   ))}
@@ -305,14 +308,14 @@ export default function Ajustes() {
           </p>
           {ajustes.clausulas.map((cl, i) => (
             <div key={cl.id} className="tarjeta plana" style={{ marginBottom: 10, padding: 10 }}>
-              <textarea
+              <AreaTexto
                 rows={2}
-                value={cl.texto}
-                onChange={(e) => {
-                  const clausulas = [...ajustes.clausulas];
-                  clausulas[i] = { ...cl, texto: e.target.value };
-                  setAj({ clausulas });
-                }}
+                valor={cl.texto}
+                guardar={(v) =>
+                  setAj((a) => ({
+                    clausulas: a.clausulas.map((x) => (x.id === cl.id ? { ...x, texto: v } : x)),
+                  }))
+                }
               />
               <div className="fila entre" style={{ marginTop: 8 }}>
                 <label className="fila" style={{ cursor: 'pointer' }}>
@@ -361,32 +364,30 @@ export default function Ajustes() {
           </p>
           <div className="grid-2">
             <Campo etiqueta="Banco">
-              <input
-                value={perfil.cuentaBancaria.banco}
-                onChange={(e) => set({ cuentaBancaria: { ...perfil.cuentaBancaria, banco: e.target.value } })}
+              <CampoTexto
+                valor={perfil.cuentaBancaria.banco}
+                guardar={(v) => setBanco({ banco: v })}
               />
             </Campo>
             <Campo etiqueta="Tipo de cuenta">
-              <input
-                value={perfil.cuentaBancaria.tipoCuenta}
+              <CampoTexto
+                valor={perfil.cuentaBancaria.tipoCuenta}
                 placeholder="Cuenta corriente"
-                onChange={(e) =>
-                  set({ cuentaBancaria: { ...perfil.cuentaBancaria, tipoCuenta: e.target.value } })
-                }
+                guardar={(v) => setBanco({ tipoCuenta: v })}
               />
             </Campo>
           </div>
           <Campo etiqueta="Número de cuenta">
-            <input
-              value={perfil.cuentaBancaria.numero}
+            <CampoTexto
+              valor={perfil.cuentaBancaria.numero}
               inputMode="numeric"
-              onChange={(e) => set({ cuentaBancaria: { ...perfil.cuentaBancaria, numero: e.target.value } })}
+              guardar={(v) => setBanco({ numero: v })}
             />
           </Campo>
           <Campo etiqueta="Titular">
-            <input
-              value={perfil.cuentaBancaria.titular}
-              onChange={(e) => set({ cuentaBancaria: { ...perfil.cuentaBancaria, titular: e.target.value } })}
+            <CampoTexto
+              valor={perfil.cuentaBancaria.titular}
+              guardar={(v) => setBanco({ titular: v })}
             />
           </Campo>
         </div>

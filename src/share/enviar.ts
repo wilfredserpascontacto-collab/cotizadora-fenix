@@ -6,6 +6,8 @@ import type { TotalesCotizacion } from '../domain/cotizacion';
 export interface ArchivoPdf {
   nombre: string;
   blob: Blob;
+  /** Cual de los dos documentos es, para poder nombrarlo en pantalla. */
+  tipo: 'cotizacion' | 'materiales';
 }
 
 export type ResultadoEnvio =
@@ -63,20 +65,31 @@ export function descargar({ nombre, blob }: ArchivoPdf) {
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
-export function abrirPdf({ blob }: ArchivoPdf) {
-  const url = URL.createObjectURL(blob);
-  abrirEnlace(url);
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
-}
-
 /**
- * Abre un enlace en otra pestana, y si el navegador lo bloquea, navega en la
- * actual. En una PWA instalada window.open devuelve null bastante seguido, y
- * sin este respaldo el chat de WhatsApp simplemente no se abria nunca.
+ * Abre el PDF para verlo. Si no se puede, lo guarda.
+ *
+ * Antes esto usaba el mismo respaldo que los enlaces de WhatsApp: si la
+ * pestana no abria, mandaba la ventana actual a la direccion del archivo. Con
+ * un wa.me eso esta bien. Con un PDF no: en una app instalada la unica ventana
+ * que hay es la app, asi que se iba a una pantalla en blanco de la que solo se
+ * sale cerrandola, y el archivo terminaba en Descargas con un nombre de
+ * maquina — algo como "fc79ac31-816f-4e11-8f43-dd14d9ae0429.pdf" —, imposible
+ * de reconocer. Eso es, casi seguro, lo que se vivia como "a veces no genera
+ * los PDF": el PDF se generaba siempre; lo que fallaba era mostrarlo.
+ *
+ * Ahora, si la pestana no abre, el archivo se guarda con su nombre de verdad y
+ * la pantalla sigue donde estaba. Devuelve como termino, para poder avisar.
  */
-function abrirEnlace(url: string) {
+export function abrirPdf(archivo: ArchivoPdf): 'abierto' | 'guardado' {
+  const url = URL.createObjectURL(archivo.blob);
   const ventana = window.open(url, '_blank', 'noopener');
-  if (!ventana) window.location.href = url;
+  if (ventana) {
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return 'abierto';
+  }
+  URL.revokeObjectURL(url);
+  descargar(archivo);
+  return 'guardado';
 }
 
 export function urlWhatsApp(texto: string, telefono?: string) {

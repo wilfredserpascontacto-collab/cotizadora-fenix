@@ -209,6 +209,15 @@ export interface Cotizacion {
   estado: EstadoCotizacion;
   creadaEn: number;
   modificadaEn: number;
+  /**
+   * Cuando se saco del historial, si se saco.
+   *
+   * Archivar no es borrar: la cotizacion sigue entera, con su numero y sus
+   * precios congelados, y se puede volver a sacar. Solo deja de estorbar en la
+   * lista. Es lo que casi siempre se quiere cuando se pide "eliminar": que la
+   * pantalla no tenga trabajos viejos que ya no importan.
+   */
+  archivadaEn?: number | null;
 
   // Puertas que se dejan abiertas para las fases siguientes. No se usan hoy.
   /** Orden de trabajo generada a partir de esta cotizacion aceptada. */

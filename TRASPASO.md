@@ -55,9 +55,23 @@ tomacorriente 220V y el interruptor de tres vías. Los consumibles que sí se
 dañan mantienen su 5%.
 
 **El correlativo se asigna al emitir, no al crear.** Si se asignara al crear el
-borrador, cada cotización abandonada dejaría un hueco en la serie. Como
-contrapartida, una cotización ya emitida **no se puede borrar** (sólo marcarse
-rechazada o vencida), porque borrarla dejaría el mismo hueco.
+borrador, cada cotización abandonada dejaría un hueco en la serie.
+
+Durante un tiempo, como contrapartida, una cotización ya emitida no se podía
+borrar: se creía que borrarla dejaría el mismo hueco y que el número se
+reusaría. Eso era falso. El correlativo no se calcula contando lo que hay
+guardado: vive en su propio contador en `meta` y sólo sube (`asignarCorrelativo`
+toma `max(contador, mayor número emitido) + 1`). Borrar la COT-0007 deja el
+hueco del 7, y un hueco no le hace daño a nadie; la siguiente cotización sigue
+siendo la 8. Así que **hoy sí se puede borrar**, y hay dos caminos:
+
+- **Archivar** (lo normal): la cotización sale del historial pero queda entera,
+  con su número y sus precios congelados, en la pestaña *Archivadas*, y se
+  puede sacar de ahí cuando sea. Es lo que casi siempre se quiere cuando se
+  pide "eliminar": que la lista no tenga trabajos viejos que ya no importan.
+- **Borrar para siempre**: desaparece. La pantalla avisa antes qué se pierde
+  —esta copia, no el número— y ofrece archivar en su lugar. *Avisar no es
+  impedir.*
 
 **Los precios se congelan en el renglón.** Cambiar un precio en Catálogos no
 altera ninguna cotización vieja. Eso es intencional, no un bug: una cotización

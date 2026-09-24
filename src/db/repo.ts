@@ -1,4 +1,4 @@
-import { db, asignarCorrelativo, guardarBorradorActivo, leerAjustes, leerPerfil } from './db';
+import { db, asignarCorrelativo, guardarBorradorActivo, leerAjustes, leerBorradorActivo, leerPerfil } from './db';
 import { nuevoId, renglonDesdePartida } from '../domain/cotizacion';
 import type {
   AjusteMaterial,
@@ -218,10 +218,42 @@ export async function duplicarCotizacion(cot: Cotizacion): Promise<Cotizacion> {
 }
 
 /** Solo se borran borradores: una cotizacion emitida dejaria un hueco en la serie. */
-export async function eliminarBorrador(cot: Cotizacion): Promise<void> {
-  if (cot.numero !== null) throw new Error('Una cotizacion ya emitida no se puede eliminar.');
+/**
+ * Saca una cotizacion del historial sin perderla.
+ *
+ * Lo que se pidio fue "poder eliminar cotizaciones del historial", y casi
+ * siempre lo que molesta es la lista larga, no la cotizacion en si. Archivada
+ * conserva su numero, sus precios congelados y su PDF reproducible; solo deja
+ * de aparecer, y se puede volver a sacar cuando haga falta.
+ */
+export async function archivarCotizacion(cot: Cotizacion): Promise<void> {
+  await guardarCotizacion({ ...cot, archivadaEn: Date.now() });
+  const activo = await leerBorradorActivo();
+  if (activo === cot.id) await guardarBorradorActivo(null);
+}
+
+export async function desarchivarCotizacion(cot: Cotizacion): Promise<void> {
+  await guardarCotizacion({ ...cot, archivadaEn: null });
+}
+
+/**
+ * Borra una cotizacion de verdad, este emitida o no.
+ *
+ * Durante un tiempo esto estuvo prohibido para las emitidas, por miedo a que
+ * el numero se reusara y dos cotizaciones distintas terminaran llamandose
+ * igual. Ese miedo era infundado: el correlativo no se calcula contando lo que
+ * hay guardado, sino que vive en su propio contador en `meta`, que solo sube.
+ * Borrar la COT-0007 deja el hueco del 7 en la serie — y un hueco no le hace
+ * daño a nadie — pero la proxima cotizacion sigue siendo la 8.
+ *
+ * Lo que si se pierde, y no vuelve, es el respaldo de un papel que el cliente
+ * quiza tenga en la mano. Por eso la pantalla lo dice antes de hacerlo, y
+ * ofrece archivar primero. Avisar no es impedir.
+ */
+export async function eliminarCotizacion(cot: Cotizacion): Promise<void> {
   await db.cotizaciones.delete(cot.id);
-  await guardarBorradorActivo(null);
+  const activo = await leerBorradorActivo();
+  if (activo === cot.id) await guardarBorradorActivo(null);
 }
 
 // ---------------------------------------------------------------------------

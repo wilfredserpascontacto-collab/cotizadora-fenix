@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { leerAjustes, leerPerfil, proximoCorrelativo } from '../db/db';
-import { actualizarRenglon, emitirCotizacion, guardarCotizacion } from '../db/repo';
+import { actualizarRenglon, emitirCotizacion } from '../db/repo';
 import { calcularTotales, desglosePago, fmtFecha, formatearNumero } from '../domain/cotizacion';
 import { fmtMoney } from '../domain/money';
 import { IVA_BPS, type RenglonInstalacion } from '../domain/types';
@@ -15,11 +15,12 @@ import { nombreArchivo } from '../pdf/comun';
 import { abrirPdf, descargar, enviarPdfs, textoResumen, type ArchivoPdf } from '../share/enviar';
 import { Barra, Campo, Cargando, Hoja, Vacio } from '../components/ui';
 import { EditorPrecio } from '../components/EditorPrecio';
+import { AreaTexto, CampoNumero } from '../components/campos';
 
 export default function Resumen() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { cot, cliente, cargando } = useCotizacion(id);
+  const { cot, cliente, cargando, aplicar } = useCotizacion(id);
   const { filas, catalogo } = useMateriales(cot);
   const perfil = useLiveQuery(() => leerPerfil(), []);
   const ajustes = useLiveQuery(() => leerAjustes(), []);
@@ -66,12 +67,14 @@ export default function Resumen() {
 
     if (incluye.servicio) {
       archivos.push({
+        tipo: 'cotizacion',
         nombre: nombreArchivo(emitida, perfil!, 'cotizacion'),
         blob: generarCotizacionPdf(emitida, perfil!, cliente, tipoObra?.nombre ?? 'tipo de obra', formaPago),
       });
     }
     if (incluye.materiales) {
       archivos.push({
+        tipo: 'materiales',
         nombre: nombreArchivo(emitida, perfil!, 'materiales'),
         blob: generarMaterialesPdf(emitida, perfil!, cliente, filasFinales),
       });
@@ -130,14 +133,18 @@ export default function Resumen() {
    * desde el toque para que ningún navegador lo tome por una descarga
    * que la persona no pidió.
    */
-  function guardarEnTelefono() {
-    if (!listos) return;
-    for (const a of listos.archivos) descargar(a);
-    setAviso(
-      listos.archivos.length === 1
-        ? `Guardado: ${listos.archivos[0].nombre}`
-        : `Guardados: ${listos.archivos.map((a) => a.nombre).join(' y ')}`,
-    );
+  /**
+   * Guarda un archivo, de a uno.
+   *
+   * Antes un solo toque disparaba las dos descargas seguidas. Los navegadores
+   * cuentan eso como "descarga multiple" y dejan pasar la primera callando la
+   * segunda, sin decir nada: quedaba la cotizacion y no la lista de
+   * materiales, o al reves. Un boton por archivo es un toque por archivo, y
+   * entonces no hay nada que bloquear.
+   */
+  function guardarUno(a: ArchivoPdf) {
+    descargar(a);
+    setAviso(`Guardado: ${a.nombre}`);
   }
 
   /** Cambiar que se manda invalida lo ya generado. */
@@ -147,22 +154,37 @@ export default function Resumen() {
     setRespaldo(null);
   }
 
+  /**
+   * Abre uno de los PDF para mirarlo.
+   *
+   * Antes, si algo fallaba aca adentro, no pasaba absolutamente nada: no habia
+   * catch, el error se perdia en la consola y en pantalla quedaba el mismo
+   * boton, como si no lo hubieran tocado. Ahora avisa.
+   */
   async function verPdf(cual: 'servicio' | 'materiales') {
     setEnviando(true);
     try {
       const emitida = await emitirCotizacion(cot!);
       const filasFinales = listaDeMateriales(emitida, catalogo!);
-      abrirPdf(
+      const resultado = abrirPdf(
         cual === 'servicio'
           ? {
+              tipo: 'cotizacion' as const,
               nombre: nombreArchivo(emitida, perfil!, 'cotizacion'),
               blob: generarCotizacionPdf(emitida, perfil!, cliente, tipoObra?.nombre ?? 'tipo de obra', formaPago),
             }
           : {
+              tipo: 'materiales' as const,
               nombre: nombreArchivo(emitida, perfil!, 'materiales'),
               blob: generarMaterialesPdf(emitida, perfil!, cliente, filasFinales),
             },
       );
+      if (resultado === 'guardado') {
+        setAviso('El teléfono no dejó abrirlo aparte, así que quedó guardado en Descargas.');
+      }
+    } catch (e) {
+      console.error(e);
+      setAviso('No se pudo abrir el PDF. Probá de nuevo, o generalo desde el botón de abajo.');
     } finally {
       setEnviando(false);
     }
@@ -239,7 +261,7 @@ export default function Resumen() {
                   type="button"
                   className="btn chico fantasma"
                   style={{ padding: 0, minHeight: 0, textDecoration: 'underline' }}
-                  onClick={() => void guardarCotizacion({ ...cot, aplicaIva: cot.aplicaIva === false })}
+                  onClick={() => void aplicar((c) => ({ ...c, aplicaIva: c.aplicaIva === false }))}
                 >
                   {cot.aplicaIva !== false ? 'quitar IVA' : 'agregar IVA'}
                 </button>
@@ -261,7 +283,7 @@ export default function Resumen() {
                   type="button"
                   className="chip"
                   aria-pressed={cot.formaPagoId === f.id}
-                  onClick={() => void guardarCotizacion({ ...cot, formaPagoId: f.id })}
+                  onClick={() => void aplicar((c) => ({ ...c, formaPagoId: f.id }))}
                 >
                   {f.nombre}
                 </button>
@@ -349,12 +371,12 @@ export default function Resumen() {
                     style={{ width: 22, height: 22, minHeight: 22, flex: '0 0 auto' }}
                     checked={marcada}
                     onChange={(e) =>
-                      void guardarCotizacion({
-                        ...cot,
+                      void aplicar((c) => ({
+                        ...c,
                         clausulasSeleccionadas: e.target.checked
-                          ? [...seleccionadas, cl.id]
-                          : seleccionadas.filter((id) => id !== cl.id),
-                      })
+                          ? [...(c.clausulasSeleccionadas ?? []), cl.id]
+                          : (c.clausulasSeleccionadas ?? []).filter((id) => id !== cl.id),
+                      }))
                     }
                   />
                   <span className="nombre" style={{ fontWeight: 400 }}>{cl.texto}</span>
@@ -367,28 +389,25 @@ export default function Resumen() {
         <div className="tarjeta">
           <h3>Condiciones</h3>
           <Campo etiqueta="Texto que sale en el PDF">
-            <textarea
-              value={cot.condiciones}
-              onChange={(e) => void guardarCotizacion({ ...cot, condiciones: e.target.value })}
+            <AreaTexto
+              valor={cot.condiciones}
+              guardar={(v) => void aplicar((c) => ({ ...c, condiciones: v }))}
               rows={5}
             />
           </Campo>
           <Campo etiqueta="Notas" ayuda="Opcional.">
-            <textarea
-              value={cot.notas ?? ''}
-              onChange={(e) => void guardarCotizacion({ ...cot, notas: e.target.value })}
+            <AreaTexto
+              valor={cot.notas ?? ''}
+              guardar={(v) => void aplicar((c) => ({ ...c, notas: v }))}
               rows={2}
             />
           </Campo>
           <Campo etiqueta="Días de validez">
-            <input
-              type="number"
-              inputMode="numeric"
+            <CampoNumero
               min={1}
-              value={cot.diasValidez}
-              onChange={(e) =>
-                void guardarCotizacion({ ...cot, diasValidez: Math.max(1, Number(e.target.value) || 1) })
-              }
+              minimo={1}
+              valor={cot.diasValidez}
+              guardar={(v) => void aplicar((c) => ({ ...c, diasValidez: v }))}
             />
           </Campo>
         </div>
@@ -494,14 +513,18 @@ export default function Resumen() {
                 {listos.archivos.length === 1 ? 'Archivo listo' : `${listos.archivos.length} archivos listos`}.
               </p>
               <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
-                <button
-                  type="button"
-                  className="btn"
-                  style={{ width: '100%' }}
-                  onClick={guardarEnTelefono}
-                >
-                  {listos.archivos.length === 1 ? 'Guardar en el teléfono' : 'Guardar los PDF en el teléfono'}
-                </button>
+                {/* Un botón por archivo: el navegador bloquea dos descargas de un mismo toque. */}
+                {listos.archivos.map((a) => (
+                  <button
+                    key={a.nombre}
+                    type="button"
+                    className="btn"
+                    style={{ width: '100%' }}
+                    onClick={() => guardarUno(a)}
+                  >
+                    Guardar {a.tipo === 'materiales' ? 'la lista de materiales' : 'la cotización'}
+                  </button>
+                ))}
                 {/* Sin nada en medio: navigator.share sale del propio toque. */}
                 <button
                   type="button"

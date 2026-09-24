@@ -23,12 +23,15 @@ export default function Inicio() {
   const perfil = useLiveQuery(() => leerPerfil(), []);
 
   const conteos = useLiveQuery(async () => {
-    const [partidas, cotizaciones, enviadas] = await Promise.all([
-      db.partidas.count(),
-      db.cotizaciones.count(),
-      db.cotizaciones.where('estado').equals('enviada').count(),
-    ]);
-    return { partidas, cotizaciones, enviadas };
+    // Lo archivado no se cuenta: si se saco de la lista, tampoco tiene que
+    // seguir inflando el numero de la portada.
+    const [partidas, todas] = await Promise.all([db.partidas.count(), db.cotizaciones.toArray()]);
+    const vivas = todas.filter((c) => c.archivadaEn == null);
+    return {
+      partidas,
+      cotizaciones: vivas.length,
+      enviadas: vivas.filter((c) => c.estado === 'enviada').length,
+    };
   }, []);
 
   /**
@@ -37,7 +40,9 @@ export default function Inicio() {
    * sean las mas recientes. Asi el aviso de dar seguimiento no se entierra.
    */
   const actividad = useLiveQuery(async () => {
-    const cotizaciones = await db.cotizaciones.orderBy('modificadaEn').reverse().toArray();
+    const cotizaciones = (await db.cotizaciones.orderBy('modificadaEn').reverse().toArray()).filter(
+      (c) => c.archivadaEn == null,
+    );
     const clientes = await db.clientes.toArray();
     const porCliente = new Map(clientes.map((c) => [c.id, c]));
     const ahora = Date.now();
