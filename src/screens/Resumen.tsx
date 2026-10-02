@@ -15,7 +15,7 @@ import { nombreArchivo } from '../pdf/comun';
 import { abrirPdf, descargar, enviarPdfs, textoResumen, type ArchivoPdf } from '../share/enviar';
 import { Barra, Campo, Cargando, Hoja, Vacio } from '../components/ui';
 import { EditorPrecio } from '../components/EditorPrecio';
-import { AreaTexto, CampoNumero } from '../components/campos';
+import { AreaTexto, CampoNumero, CampoTexto } from '../components/campos';
 
 export default function Resumen() {
   const { id } = useParams();
@@ -387,8 +387,25 @@ export default function Resumen() {
         )}
 
         <div className="tarjeta">
+          <h3>Nombre bajo la empresa</h3>
+          <Campo
+            etiqueta="Nombre"
+            ayuda="Sale justo debajo del nombre de la empresa en el PDF. Déjalo vacío para quitarlo."
+          >
+            <CampoTexto
+              valor={cot.atiende ?? perfil.atiende ?? ''}
+              guardar={(v) => void aplicar((c) => ({ ...c, atiende: v }))}
+              placeholder="Ej. Francisco"
+            />
+          </Campo>
+        </div>
+
+        <div className="tarjeta">
           <h3>Condiciones</h3>
-          <Campo etiqueta="Texto que sale en el PDF">
+          <Campo
+            etiqueta="Texto que sale en el PDF"
+            ayuda="Una línea por punto. La garantía también va aquí: escríbela, cámbiala o bórrala como cualquier otro texto."
+          >
             <AreaTexto
               valor={cot.condiciones}
               guardar={(v) => void aplicar((c) => ({ ...c, condiciones: v }))}

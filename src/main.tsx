@@ -8,6 +8,10 @@ import './styles/app.css';
 // Service worker: precache del app shell para que abra sin conexion.
 registerSW({ immediate: true });
 
+// Pide que el navegador no borre los datos (cotizaciones, catalogo) si el telefono
+// anda corto de espacio. Si no lo concede, no pasa nada: la app sigue igual.
+void navigator.storage?.persist?.().catch(() => {});
+
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 createRoot(document.getElementById('root')!).render(

@@ -137,6 +137,12 @@ export default function Ajustes() {
           <Campo etiqueta="Dirección">
             <CampoTexto valor={perfil.direccion ?? ''} guardar={(v) => set({ direccion: v })} />
           </Campo>
+          <Campo
+            etiqueta="Nombre bajo la empresa"
+            ayuda="Sale justo debajo del nombre de la empresa en los PDF. Vacío = no sale. Cada cotización lo puede cambiar."
+          >
+            <CampoTexto valor={perfil.atiende ?? ''} guardar={(v) => set({ atiende: v })} placeholder="Ej. Francisco" />
+          </Campo>
           <div className="grid-2">
             <Campo etiqueta="NIT">
               <CampoTexto valor={perfil.nit ?? ''} guardar={(v) => set({ nit: v })} />
@@ -156,7 +162,10 @@ export default function Ajustes() {
               guardar={(v) => set({ condicionesPorDefecto: v })}
             />
           </Campo>
-          <Campo etiqueta="Garantía del trabajo">
+          <Campo
+            etiqueta="Garantía por defecto"
+            ayuda="Se copia al texto de condiciones de cada cotización nueva, donde se puede cambiar o borrar."
+          >
             <AreaTexto rows={2} valor={perfil.garantia} guardar={(v) => set({ garantia: v })} />
           </Campo>
           <Campo etiqueta="Días de validez">

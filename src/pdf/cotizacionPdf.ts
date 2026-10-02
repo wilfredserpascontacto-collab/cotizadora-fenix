@@ -137,7 +137,8 @@ export function generarCotizacionPdf(
   const condiciones = [
     textoFormaPago,
     `Validez de la oferta: ${cot.diasValidez} días a partir de la fecha de emisión.`,
-    perfil.garantia && `Garantía: ${perfil.garantia}`,
+    // Las cotizaciones nuevas llevan la garantia dentro de `condiciones`, editable.
+    !cot.garantiaEnCondiciones && perfil.garantia && `Garantía: ${perfil.garantia}`,
     ...cot.condiciones.split('\n').map((s) => s.trim()).filter(Boolean),
     cot.notas && `Notas: ${cot.notas}`,
     ...(cot.clausulasCongeladas ?? []),

@@ -25,9 +25,15 @@ export function useCotizacion(id: string | undefined) {
   const aplicar = useCallback(
     async (cambio: (actual: Cotizacion) => Cotizacion) => {
       if (!id) return;
-      const actual = await db.cotizaciones.get(id);
-      if (!actual) return;
-      await guardarCotizacion(cambio(actual));
+      // Leer y escribir en una sola transaccion: dos campos que se guardan casi a
+      // la vez (uno al salir, otro al tocar un boton) se hacen fila en vez de
+      // pisarse. Sin esto, el segundo guardaba sobre una copia vieja y borraba
+      // lo del primero.
+      await db.transaction('rw', db.cotizaciones, async () => {
+        const actual = await db.cotizaciones.get(id);
+        if (!actual) return;
+        await guardarCotizacion(cambio(actual));
+      });
     },
     [id],
   );

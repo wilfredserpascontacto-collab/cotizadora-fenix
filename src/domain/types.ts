@@ -198,6 +198,17 @@ export interface Cotizacion {
   materialesCongelados?: Material[];
   notas?: string;
   condiciones: string;
+  /**
+   * Nombre que sale justo debajo del nombre de la empresa en los PDF.
+   * undefined = usa el del perfil; '' = sin nombre en esta cotizacion.
+   */
+  atiende?: string;
+  /**
+   * true cuando la garantia ya viaja dentro del texto de `condiciones` (se puede
+   * editar o borrar libremente). Las cotizaciones viejas no lo traen y siguen
+   * imprimiendo la garantia fija del perfil, para que sus PDF no cambien.
+   */
+  garantiaEnCondiciones?: boolean;
   /** Firma del cliente, capturada en el telefono al aceptar in situ. Opcional. */
   firmaClienteDataUrl?: string;
   firmadaEn?: number;
@@ -239,7 +250,10 @@ export interface PerfilEmpresa {
   nrc?: string;
   condicionesPorDefecto: string;
   diasValidezPorDefecto: number;
+  /** Texto inicial de garantia: se copia a las condiciones de cada cotizacion nueva. */
   garantia: string;
+  /** Nombre que sale bajo el nombre de la empresa. Vacio = no sale. */
+  atiende?: string;
   /** Prefijo del correlativo. Sirve de desempate si algun dia hay dos telefonos. */
   prefijoCorrelativo: string;
   formaPagoPorDefectoId: FormaPagoId;

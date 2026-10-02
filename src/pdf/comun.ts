@@ -42,6 +42,15 @@ export function encabezado(
   doc.setFontSize(17);
   doc.text(perfil.nombre || 'Grupo Phoenix', xTexto, y + 16);
 
+  // Nombre de quien atiende, justo debajo de la empresa. Si esta vacio, no sale.
+  const atiende = (cot.atiende ?? perfil.atiende ?? '').trim();
+  if (atiende) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10.5);
+    doc.setTextColor(...TINTA);
+    doc.text(atiende, xTexto, y + 30);
+  }
+
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...GRIS);
@@ -51,7 +60,7 @@ export function encabezado(
     perfil.direccion,
     [perfil.nit && `NIT ${perfil.nit}`, perfil.nrc && `NRC ${perfil.nrc}`].filter(Boolean).join('  ·  '),
   ].filter(Boolean) as string[];
-  let yDatos = y + 30;
+  let yDatos = y + (atiende ? 43 : 30);
   for (const linea of datos) {
     doc.text(linea, xTexto, yDatos);
     yDatos += 11;

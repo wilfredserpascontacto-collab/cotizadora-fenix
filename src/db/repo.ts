@@ -27,6 +27,13 @@ export const guardarCliente = (c: Cliente) => db.clientes.put(c);
 // ---------------------------------------------------------------------------
 // Cotizaciones
 
+/** La garantia por defecto como linea de condiciones; no repite "Garantía:" si ya lo trae. */
+function textoGarantia(g: string): string {
+  const limpio = g.trim();
+  if (!limpio) return '';
+  return /^garant/i.test(limpio) ? limpio : `Garantía: ${limpio}`;
+}
+
 export async function crearCotizacion(datos: {
   clienteId: string;
   ubicacion: string;
@@ -55,7 +62,14 @@ export async function crearCotizacion(datos: {
     aplicaIva: true,
     ajustesMateriales: [],
     materialesExtra: [],
-    condiciones: perfil.condicionesPorDefecto,
+    condiciones: [
+      perfil.condicionesPorDefecto.trim(),
+      textoGarantia(perfil.garantia),
+    ]
+      .filter(Boolean)
+      .join('\n'),
+    garantiaEnCondiciones: true,
+    atiende: perfil.atiende ?? '',
     formaPagoId: perfil.formaPagoPorDefectoId,
     clausulasSeleccionadas: ajustes.clausulas.filter((c) => c.porDefecto).map((c) => c.id),
     estado: 'borrador',
