@@ -12,7 +12,7 @@ import { esFaltante } from '../domain/materiales';
 import { generarCotizacionPdf } from '../pdf/cotizacionPdf';
 import { generarMaterialesPdf } from '../pdf/materialesPdf';
 import { nombreArchivo } from '../pdf/comun';
-import { abrirPdf, descargar, enviarPdfs, textoResumen, type ArchivoPdf } from '../share/enviar';
+import { abrirPdf, abrirVentana, descargar, enviarPdfs, textoResumen, type ArchivoPdf } from '../share/enviar';
 import { Barra, Campo, Cargando, Hoja, Vacio } from '../components/ui';
 import { EditorPrecio } from '../components/EditorPrecio';
 import { AreaTexto, CampoNumero, CampoTexto } from '../components/campos';
@@ -162,6 +162,9 @@ export default function Resumen() {
    * boton, como si no lo hubieran tocado. Ahora avisa.
    */
   async function verPdf(cual: 'servicio' | 'materiales') {
+    if (enviando) return;
+    // La ventana se abre ya, dentro del toque; el PDF se le pone cuando esta listo.
+    const ventana = abrirVentana();
     setEnviando(true);
     try {
       const emitida = await emitirCotizacion(cot!);
@@ -178,12 +181,14 @@ export default function Resumen() {
               nombre: nombreArchivo(emitida, perfil!, 'materiales'),
               blob: generarMaterialesPdf(emitida, perfil!, cliente, filasFinales),
             },
+        ventana,
       );
       if (resultado === 'guardado') {
         setAviso('El teléfono no dejó abrirlo aparte, así que quedó guardado en Descargas.');
       }
     } catch (e) {
       console.error(e);
+      ventana?.close();
       setAviso('No se pudo abrir el PDF. Probá de nuevo, o generalo desde el botón de abajo.');
     } finally {
       setEnviando(false);

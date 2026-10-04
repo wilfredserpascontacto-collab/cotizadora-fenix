@@ -66,28 +66,41 @@ export function descargar({ nombre, blob }: ArchivoPdf) {
 }
 
 /**
- * Abre el PDF para verlo. Si no se puede, lo guarda.
- *
- * Antes esto usaba el mismo respaldo que los enlaces de WhatsApp: si la
- * pestana no abria, mandaba la ventana actual a la direccion del archivo. Con
- * un wa.me eso esta bien. Con un PDF no: en una app instalada la unica ventana
- * que hay es la app, asi que se iba a una pantalla en blanco de la que solo se
- * sale cerrandola, y el archivo terminaba en Descargas con un nombre de
- * maquina — algo como "fc79ac31-816f-4e11-8f43-dd14d9ae0429.pdf" —, imposible
- * de reconocer. Eso es, casi seguro, lo que se vivia como "a veces no genera
- * los PDF": el PDF se generaba siempre; lo que fallaba era mostrarlo.
- *
- * Ahora, si la pestana no abre, el archivo se guarda con su nombre de verdad y
- * la pantalla sigue donde estaba. Devuelve como termino, para poder avisar.
+ * Abre una ventana en blanco. Hay que llamarla DENTRO del toque, antes de armar
+ * el PDF: abrir ventanas exige un gesto reciente, y armar el PDF tarda.
  */
-export function abrirPdf(archivo: ArchivoPdf): 'abierto' | 'guardado' {
+export function abrirVentana(): Window | null {
+  try {
+    return window.open('', '_blank');
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Muestra un PDF ya armado: en la ventana que se abrio con el toque, y si el
+ * telefono no dejo abrir ventanas, lo guarda con su nombre de verdad. Devuelve
+ * como termino, para poder avisar.
+ *
+ * NUNCA navega la ventana de la app hacia el PDF: en una app instalada es la
+ * unica ventana que hay, y se iria a una pantalla de la que solo se sale
+ * cerrandola.
+ *
+ * Ojo con el truco de pasarle 'noopener' a window.open: con esa opcion el
+ * navegador devuelve null SIEMPRE, abra o no la pestana. Una version anterior
+ * lo usaba para decidir si "habia abierto", asi que nunca lo creia: soltaba la
+ * direccion del PDF recien abierto y ademas lo descargaba. Aqui no hace falta
+ * 'noopener': la direccion es un blob nuestro, no un sitio de terceros.
+ */
+export function abrirPdf(archivo: ArchivoPdf, ventana: Window | null): 'abierto' | 'guardado' {
   const url = URL.createObjectURL(archivo.blob);
-  const ventana = window.open(url, '_blank', 'noopener');
-  if (ventana) {
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  // Cinco minutos: lo que tarda la pestana en leerlo, con holgura en un telefono lento.
+  setTimeout(() => URL.revokeObjectURL(url), 5 * 60_000);
+  if (ventana && !ventana.closed) {
+    ventana.location.href = url;
     return 'abierto';
   }
-  URL.revokeObjectURL(url);
+  if (window.open(url, '_blank')) return 'abierto';
   descargar(archivo);
   return 'guardado';
 }

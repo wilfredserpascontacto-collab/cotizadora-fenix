@@ -18,9 +18,9 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           // jsPDF arrastra canvg, html2canvas y dompurify con imports ESTATICOS.
-          // Se agrupan aparte para cachearlos como una unidad, pero entran al
-          // precache igual: si faltan, el grafo de modulos no instancia y la app
-          // no abre sin conexion.
+          // Se agrupan aparte para cachearlos como una unidad. OJO: esos tres
+          // son imports DINAMICOS dentro de jsPDF (solo corren con doc.html() o
+          // doc.svg()), no estaticos; por eso se dejan fuera del precache.
           manualChunks: {
             pdf: ['jspdf', 'jspdf-autotable'],
           },
@@ -35,6 +35,11 @@ export default defineConfig(({ mode }) => {
         workbox: {
           // Precache de todo el app shell: la app abre completa sin conexion.
           globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+          // Trozos que jsPDF solo carga si se le pide convertir HTML o SVG a PDF
+          // (import() dinamico). La cotizadora nunca lo pide, y bajarlos en la
+          // primera visita eran ~390 KB de mas justo cuando el telefono mas
+          // trabaja. El nucleo de jsPDF (chunk "pdf") si entra al precache.
+          globIgnores: ['**/html2canvas*.js', '**/purify*.js', '**/index.es-*.js'],
           maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
           navigateFallback: base + 'index.html',
           cleanupOutdatedCaches: true,
